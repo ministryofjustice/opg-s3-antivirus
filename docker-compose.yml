@@ -1,0 +1,34 @@
+---
+version: "3.6"
+
+services:
+  antivirus-function:
+    build:
+      context: .
+    environment:
+      AWS_REGION: eu-west-1
+      AWS_S3_ENDPOINT: http://localstack-s3:4566
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+
+  localstack-s3:
+    image: localstack/localstack:0.13
+    depends_on: [antivirus-function]
+    volumes:
+      - "./scripts/localstack-s3/init:/docker-entrypoint-initaws.d"
+      - "./scripts/localstack-s3/wait:/scripts/wait"
+      - "./tmp/localstack/:/localstack/data/"
+      - "./tmp/fileoutput:/tmp/fileoutput"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      DEFAULT_REGION: eu-west-1
+      HOSTNAME_EXTERNAL: localstack-s3
+      SERVICES: s3,lambda
+      LAMBDA_EXECUTOR: docker
+      LAMBDA_REMOVE_CONTAINERS: "true"
+      LAMBDA_FORWARD_URL: http://antivirus-function:9001
+      DEBUG: 1
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+volumes:
+  antivirus-build:
