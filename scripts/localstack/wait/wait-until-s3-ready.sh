@@ -7,17 +7,18 @@ iterations=0
 
 buckets=""
 
-while [[ "$iterations" -lt 300 ]]
+while [[ "$iterations" -lt 60 ]]
 do
   buckets=$(awslocal s3 ls)
 
-  if [[ $buckets = *opg-backoffice-datastore-local* ]]
+  if [[ $buckets = *uploads-bucket* ]]
   then
     echo "Found all expected buckets after $iterations seconds"
     exit 0
   fi
 
   ((iterations++))
+  printf '.'
   sleep 1
 done
 
