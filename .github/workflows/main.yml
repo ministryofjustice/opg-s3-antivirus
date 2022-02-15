@@ -17,6 +17,7 @@ jobs:
     - name: Build Veracode Package
       run: |
         mkdir package
+        cp -r vendor package
         cp go.mod package
         cp go.sum package
         cp scanner.go package
