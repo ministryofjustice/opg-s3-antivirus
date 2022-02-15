@@ -3,32 +3,40 @@ version: "3.6"
 
 services:
   antivirus-function:
+    image: antivirus-function:latest
     build:
       context: .
     environment:
       AWS_REGION: eu-west-1
-      AWS_S3_ENDPOINT: http://localstack-s3:4566
+      AWS_S3_ENDPOINT: http://localstack:4566
       AWS_ACCESS_KEY_ID: localstack
       AWS_SECRET_ACCESS_KEY: localstack
+      ANTIVIRUS_TAG_KEY: virus-scan-status
+      ANTIVIRUS_TAG_VALUE_PASS: ok
+      ANTIVIRUS_TAG_VALUE_FAIL: infected
 
-  localstack-s3:
+  localstack:
     image: localstack/localstack:0.13
     depends_on: [antivirus-function]
     volumes:
-      - "./scripts/localstack-s3/init:/docker-entrypoint-initaws.d"
-      - "./scripts/localstack-s3/wait:/scripts/wait"
-      - "./tmp/localstack/:/localstack/data/"
-      - "./tmp/fileoutput:/tmp/fileoutput"
+      - "./scripts/localstack/init:/docker-entrypoint-initaws.d"
+      - "./scripts/localstack/wait:/scripts/wait"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       DEFAULT_REGION: eu-west-1
-      HOSTNAME_EXTERNAL: localstack-s3
+      HOSTNAME_EXTERNAL: localstack
       SERVICES: s3,lambda
       LAMBDA_EXECUTOR: docker
       LAMBDA_REMOVE_CONTAINERS: "true"
       LAMBDA_FORWARD_URL: http://antivirus-function:9001
-      DEBUG: 1
       DOCKER_HOST: unix:///var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:4566 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 
 volumes:
   antivirus-build:

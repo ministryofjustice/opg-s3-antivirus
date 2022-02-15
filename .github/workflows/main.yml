@@ -1,0 +1,32 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  scan:
+    name: Run Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - run: go mod vendor
+    - name: Build Veracode Package
+      run: |
+        mkdir package
+        cp go.mod package
+        cp go.sum package
+        cp scanner.go package
+        cp main.go package
+        cp main_test.go package
+        zip -r package.zip package
+    - name: Upload to Veracode and scan
+      uses: veracode/veracode-uploadandscan-action@master
+      with:
+        appname: 'opg-s3-antivirus'
+        filepath: './package.zip'
+        vid: '${{ secrets.CYBERSECURITY_VERACODE_API_ID }}'
+        vkey: '${{ secrets.CYBERSECURITY_VERACODE_API_KEY }}'
