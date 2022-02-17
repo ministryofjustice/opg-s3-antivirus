@@ -106,6 +106,8 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	bucketName := event.Records[0].S3.Bucket.Name
 	objectKey := event.Records[0].S3.Object.Key
 
+	log.Printf("downloading object %s from bucket %s", objectKey, bucketName)
+
 	err := l.downloadFile(bucketName, objectKey)
 	if err != nil {
 		log.Print(err)
@@ -122,6 +124,8 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if status {
 		statusString = l.tagValues.pass
 	}
+
+	log.Printf("tagging object with %s", statusString)
 
 	err = l.tagFile(bucketName, objectKey, statusString)
 	if err != nil {
