@@ -62,6 +62,11 @@ func (l *Lambda) downloadFile(bucket string, key string) error {
 		return fmt.Errorf("failed to create file %q, %w", tmpFilePath, err)
 	}
 
+	log.Print(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+
 	_, err = l.downloader.Download(f, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -122,6 +127,8 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if status {
 		statusString = l.tagValues.pass
 	}
+
+	log.Printf("tagging object with %s", statusString)
 
 	err = l.tagFile(bucketName, objectKey, statusString)
 	if err != nil {
