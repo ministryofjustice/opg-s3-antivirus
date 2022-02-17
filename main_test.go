@@ -21,6 +21,10 @@ func (m *mockDownloader) Download(w io.WriterAt, input *s3.GetObjectInput, optio
 	return 0, args.Error(0)
 }
 
+func (m *mockS3Tagger) GetObject(input *s3.GetObjectInput) (out *s3.GetObjectOutput, err error) {
+	return &s3.GetObjectOutput{}, nil
+}
+
 type mockScanner struct {
 	mock.Mock
 }
