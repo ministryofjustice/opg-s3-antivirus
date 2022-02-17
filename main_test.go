@@ -35,6 +35,16 @@ type mockS3Tagger struct {
 	mock.Mock
 }
 
+func (m *mockS3Tagger) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
+	return &s3.ListObjectsOutput{
+		Contents: []*s3.Object{
+			{
+				Key: aws.String("test"),
+			},
+		},
+	}, nil
+}
+
 func (m *mockS3Tagger) GetObjectTagging(input *s3.GetObjectTaggingInput) (*s3.GetObjectTaggingOutput, error) {
 	args := m.Called(*input.Bucket, *input.Key)
 
