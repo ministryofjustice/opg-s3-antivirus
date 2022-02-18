@@ -84,14 +84,26 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 		return fmt.Errorf("failed to get tags, %w", err)
 	}
 
+	is_tag_set := false
+	for index, tag := range tagging.TagSet {
+		if *tag.Key == l.tagKey {
+			tagging.TagSet[index].Value = aws.String(status)
+			is_tag_set = true
+		}
+	}
+
+	if !is_tag_set {
+		tagging.TagSet = append(tagging.TagSet, &s3.Tag{
+			Key:   aws.String(l.tagKey),
+			Value: aws.String(status),
+		})
+	}
+
 	_, err = l.s3.PutObjectTagging(&s3.PutObjectTaggingInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Tagging: &s3.Tagging{
-			TagSet: append(tagging.TagSet, &s3.Tag{
-				Key:   aws.String(l.tagKey),
-				Value: aws.String(status),
-			}),
+			TagSet: tagging.TagSet,
 		},
 	})
 
@@ -106,11 +118,15 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	bucketName := event.Records[0].S3.Bucket.Name
 	objectKey := event.Records[0].S3.Object.Key
 
+	log.Printf("downloading %s from %s", objectKey, bucketName)
+
 	err := l.downloadFile(bucketName, objectKey)
 	if err != nil {
 		log.Print(err)
 		return MyResponse{}, err
 	}
+
+	log.Printf("file downloaded, scanning file")
 
 	status, err := l.scanner.ScanFile(tmpFilePath)
 	if err != nil {
@@ -122,6 +138,8 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if status {
 		statusString = l.tagValues.pass
 	}
+
+	log.Printf("scan complete, status %s, tagging file", statusString)
 
 	err = l.tagFile(bucketName, objectKey, statusString)
 	if err != nil {
