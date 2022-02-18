@@ -125,7 +125,7 @@ func TestHandleEventPass(t *testing.T) {
 	mockS3.AssertExpectations(t)
 }
 
-func TestHandleEventAppendsTags(t *testing.T) {
+func TestHandleEventHandlesDuplicateTags(t *testing.T) {
 	downloader := new(mockDownloader)
 	downloader.On("Download", "my-bucket", "file-key").Return(nil)
 
@@ -138,9 +138,8 @@ func TestHandleEventAppendsTags(t *testing.T) {
 		{Key: aws.String("upload-source"), Value: aws.String("online")},
 	}, nil)
 	mockS3.On("PutObjectTagging", "my-bucket", "file-key", []*s3.Tag{
-		{Key: aws.String("VIRUS_SCAN"), Value: aws.String("okay")},
-		{Key: aws.String("upload-source"), Value: aws.String("online")},
 		{Key: aws.String("VIRUS_SCAN"), Value: aws.String("fail")},
+		{Key: aws.String("upload-source"), Value: aws.String("online")},
 	}).Return(nil)
 
 	l := &Lambda{
