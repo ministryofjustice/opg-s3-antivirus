@@ -7,7 +7,7 @@ RUN yum install clamav clamd -y
 COPY ./freshclam.conf /etc
 RUN freshclam
 
-FROM golang:1.17.6 AS build-env
+FROM golang:1.17.7 AS build-env
 
 WORKDIR /app
 
