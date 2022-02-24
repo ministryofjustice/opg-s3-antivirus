@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,7 +19,7 @@ type mockDownloader struct {
 }
 
 func (m *mockDownloader) Download(w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error) {
-	args := m.Called(*input.Bucket, *input.Key)
+	args := m.Called(w, *input.Bucket, *input.Key)
 	return 0, args.Error(0)
 }
 
@@ -61,7 +63,7 @@ func createTestEvent() ObjectCreatedEvent {
 
 func TestHandleEvent(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(false, nil)
@@ -87,14 +89,12 @@ func TestHandleEvent(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, MyResponse{"scanning complete, tagged with failed"}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestHandleEventPass(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(true, nil)
@@ -120,14 +120,12 @@ func TestHandleEventPass(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, MyResponse{"scanning complete, tagged with okay"}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestHandleEventHandlesDuplicateTags(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(false, nil)
@@ -157,14 +155,12 @@ func TestHandleEventHandlesDuplicateTags(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, MyResponse{"scanning complete, tagged with fail"}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestReportsFailedDownload(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(errors.New("file does not exist"))
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(errors.New("file does not exist"))
 
 	scanner := new(mockScanner)
 
@@ -181,14 +177,12 @@ func TestReportsFailedDownload(t *testing.T) {
 	assert.Equal(t, "failed to download file, file does not exist", err.Error())
 	assert.Equal(t, MyResponse{""}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestReportsFailedScan(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(false, errors.New("clamav returned exit code 82"))
@@ -206,14 +200,12 @@ func TestReportsFailedScan(t *testing.T) {
 	assert.Equal(t, "clamav returned exit code 82", err.Error())
 	assert.Equal(t, MyResponse{""}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestReportsFailedGetTags(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(false, nil)
@@ -232,14 +224,12 @@ func TestReportsFailedGetTags(t *testing.T) {
 	assert.Equal(t, "failed to get tags, file does not exist", err.Error())
 	assert.Equal(t, MyResponse{""}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
 
 func TestReportsFailedPutTags(t *testing.T) {
 	downloader := new(mockDownloader)
-	downloader.On("Download", "my-bucket", "file-key").Return(nil)
+	downloader.On("Download", mock.Anything, "my-bucket", "file-key").Return(nil)
 
 	scanner := new(mockScanner)
 	scanner.On("ScanFile", tmpFilePath).Return(false, nil)
@@ -265,7 +255,81 @@ func TestReportsFailedPutTags(t *testing.T) {
 	assert.Equal(t, "failed to write tags, invalid tag", err.Error())
 	assert.Equal(t, MyResponse{""}, response)
 
-	downloader.AssertExpectations(t)
-	scanner.AssertExpectations(t)
-	mockS3.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
+}
+
+func TestDownloadDefinitions(t *testing.T) {
+	assert := assert.New(t)
+
+	tempdir, err := os.MkdirTemp("", "opg-s3-antivirus")
+	if !assert.Nil(err) {
+		return
+	}
+	defer os.RemoveAll(tempdir)
+
+	downloader := &mockDownloader{}
+
+	l := &Lambda{
+		downloader: downloader,
+	}
+
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "a").
+		Run(func(args mock.Arguments) {
+			w := args[0].(io.WriterAt)
+			_, _ = w.WriteAt([]byte("hello"), 0)
+		}).
+		Return(nil)
+
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "b").
+		Run(func(args mock.Arguments) {
+			w := args[0].(io.WriterAt)
+			_, _ = w.WriteAt([]byte("there"), 0)
+		}).
+		Return(nil)
+
+	err = l.downloadDefinitions(tempdir, "a-bucket", []string{"a", "b"})
+	assert.Nil(err)
+
+	fileA, _ := os.ReadFile(filepath.Join(tempdir, "a"))
+	assert.Equal([]byte("hello"), fileA)
+
+	fileB, _ := os.ReadFile(filepath.Join(tempdir, "b"))
+	assert.Equal([]byte("there"), fileB)
+
+	mock.AssertExpectationsForObjects(t, downloader)
+}
+
+func TestDownloadDefinitionsWhenError(t *testing.T) {
+	assert := assert.New(t)
+
+	tempdir, err := os.MkdirTemp("", "opg-s3-antivirus")
+	if !assert.Nil(err) {
+		return
+	}
+	defer os.RemoveAll(tempdir)
+
+	expectedErr := errors.New("what")
+
+	downloader := &mockDownloader{}
+
+	l := &Lambda{
+		downloader: downloader,
+	}
+
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "a").
+		Return(expectedErr)
+
+	err = l.downloadDefinitions(tempdir, "a-bucket", []string{"a", "b"})
+	assert.Equal(expectedErr, err)
+
+	_, err = os.Stat(filepath.Join(tempdir, "a"))
+	assert.True(os.IsNotExist(err))
+
+	_, err = os.Stat(filepath.Join(tempdir, "b"))
+	assert.True(os.IsNotExist(err))
+
+	mock.AssertExpectationsForObjects(t, downloader)
 }
