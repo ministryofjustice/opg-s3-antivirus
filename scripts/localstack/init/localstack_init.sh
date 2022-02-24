@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Create bucket for definitions
+awslocal s3api create-bucket \
+    --acl private \
+    --region eu-west-1 \
+    --bucket "virus-definitions"
+
+awslocal lambda create-function \
+         --function-name antivirus-update \
+         --code ImageUri=antivirus-update-function:latest \
+         --role arn:aws:iam::000000000:role/lambda-ex
+
 # Create Private Bucket
 awslocal s3api create-bucket \
     --acl private \
