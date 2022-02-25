@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -46,8 +47,6 @@ type Scanner interface {
 	ScanFile(path string) (bool, error)
 }
 
-const tmpFilePath = "/tmp/file"
-
 type Lambda struct {
 	tagKey     string
 	tagValues  LambdaTagValues
@@ -56,19 +55,44 @@ type Lambda struct {
 	downloader Downloader
 }
 
-func (l *Lambda) downloadFile(bucket string, key string) error {
-	f, err := os.Create(tmpFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to create file %q, %w", tmpFilePath, err)
+func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
+	if err := os.Mkdir(dir, 0755); err != nil && !os.IsExist(err) {
+		return err
 	}
 
-	_, err = l.downloader.Download(f, &s3.GetObjectInput{
+	for _, key := range files {
+		input := &s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		}
+
+		var buf aws.WriteAtBuffer
+		if _, err := l.downloader.Download(&buf, input); err != nil {
+			return err
+		}
+
+		file, err := os.Create(filepath.Join(dir, key))
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		if _, err := file.Write(buf.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (l *Lambda) downloadFile(f io.WriterAt, bucket string, key string) error {
+	_, err := l.downloader.Download(f, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to download file, %w", err)
+		return fmt.Errorf("failed to download file: %w", err)
 	}
 
 	return nil
@@ -81,7 +105,7 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to get tags, %w", err)
+		return fmt.Errorf("failed to get tags: %w", err)
 	}
 
 	is_tag_set := false
@@ -108,7 +132,7 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to write tags, %w", err)
+		return fmt.Errorf("failed to write tags: %w", err)
 	}
 
 	return nil
@@ -117,18 +141,22 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	bucketName := event.Records[0].S3.Bucket.Name
 	objectKey := event.Records[0].S3.Object.Key
-
 	log.Printf("downloading %s from %s", objectKey, bucketName)
 
-	err := l.downloadFile(bucketName, objectKey)
+	f, err := os.CreateTemp("/tmp", "file")
 	if err != nil {
+		return MyResponse{}, fmt.Errorf("failed to create file: %w", err)
+	}
+	defer f.Close()
+
+	if err := l.downloadFile(f, bucketName, objectKey); err != nil {
 		log.Print(err)
 		return MyResponse{}, err
 	}
 
 	log.Printf("file downloaded, scanning file")
 
-	status, err := l.scanner.ScanFile(tmpFilePath)
+	status, err := l.scanner.ScanFile(f.Name())
 	if err != nil {
 		log.Print(err)
 		return MyResponse{}, err
@@ -140,9 +168,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	}
 
 	log.Printf("scan complete, status %s, tagging file", statusString)
-
-	err = l.tagFile(bucketName, objectKey, statusString)
-	if err != nil {
+	if err := l.tagFile(bucketName, objectKey, statusString); err != nil {
 		log.Print(err)
 		return MyResponse{}, err
 	}
@@ -167,6 +193,12 @@ func main() {
 		scanner:    &ClamAvScanner{},
 		s3:         s3.New(sess),
 		downloader: s3manager.NewDownloader(sess),
+	}
+
+	log.Print("downloading virus definitions")
+	err := l.downloadDefinitions("/tmp/clamav", os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"), []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"})
+	if err != nil {
+		log.Printf("downloading new definitions failed: %v", err)
 	}
 
 	lambda.Start(l.HandleEvent)
