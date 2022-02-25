@@ -26,9 +26,11 @@ jobs:
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
       - name: Build Images
         run: |
-          docker-compose build antivirus-function
+          docker-compose -f docker/docker-compose.yml build antivirus-function
+          docker-compose -f docker/docker-compose.yml build antivirus-update-function
           mkdir -p /tmp/images
-          docker save -o /tmp/images/app.tar antivirus-function:latest
+          docker save -o /tmp/images/antivirus-function.tar antivirus-function:latest
+          docker save -o /tmp/images/antivirus-update-function.tar antivirus-update-function:latest
 
   unit-test:
     name: Unit Tests
@@ -36,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.7'
       - uses: unfor19/install-aws-cli-action@v1
 
       - name: Cache Go Dependencies
@@ -113,7 +117,7 @@ jobs:
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
       - name: Restore images
         run: |
-          docker load -i /tmp/images/app.tar
+          docker load -i /tmp/images/antivirus-function.tar
       - name: Run Acceptance Tests
         run: bash ./test.sh
 
@@ -147,7 +151,8 @@ jobs:
 
       - name: Restore Image
         run: |
-          docker load -i /tmp/images/app.tar
+          docker load -i /tmp/images/antivirus-function.tar
+          docker load -i /tmp/images/antivirus-update-function.tar
       - name: Trivy Image Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -187,13 +192,27 @@ jobs:
         with:
           registries: 311462405659
 
-      - name: Push Container
+      - name: Push Function Container
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: s3-antivirus
         run: |
           docker tag antivirus-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker tag antivirus-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+          if [ $BRANCH_NAME == "main" ]; then
+            # We want all of the tags pushed
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          else
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+          fi
+
+      - name: Push Update Function Container
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: s3-antivirus-update
+        run: |
+          docker tag antivirus-update-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag antivirus-update-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
             # We want all of the tags pushed
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
