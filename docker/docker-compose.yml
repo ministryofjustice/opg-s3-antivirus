@@ -5,7 +5,8 @@ services:
   antivirus-function:
     image: antivirus-function:latest
     build:
-      context: .
+      context: ..
+      dockerfile: ./docker/opg-s3-antivirus/Dockerfile
     environment:
       AWS_REGION: eu-west-1
       AWS_S3_ENDPOINT: http://localstack:4566
@@ -14,13 +15,26 @@ services:
       ANTIVIRUS_TAG_KEY: virus-scan-status
       ANTIVIRUS_TAG_VALUE_PASS: ok
       ANTIVIRUS_TAG_VALUE_FAIL: infected
+      ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
+
+  antivirus-update-function:
+    image: antivirus-update-function:latest
+    build:
+      context: ..
+      dockerfile: ./docker/opg-s3-antivirus-update/Dockerfile
+    environment:
+      AWS_REGION: eu-west-1
+      AWS_S3_ENDPOINT: http://localstack:4566
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
 
   localstack:
     image: localstack/localstack:0.13
-    depends_on: [antivirus-function]
+    depends_on: [antivirus-function, antivirus-update-function]
     volumes:
-      - "./scripts/localstack/init:/docker-entrypoint-initaws.d"
-      - "./scripts/localstack/wait:/scripts/wait"
+      - "../scripts/localstack/init:/docker-entrypoint-initaws.d"
+      - "../scripts/localstack/wait:/scripts/wait"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       DEFAULT_REGION: eu-west-1
