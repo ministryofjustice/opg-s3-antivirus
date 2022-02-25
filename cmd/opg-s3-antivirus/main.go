@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,6 +55,32 @@ type Lambda struct {
 	scanner    Scanner
 	s3         s3iface.S3API
 	downloader Downloader
+}
+
+func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
+	for _, key := range files {
+		input := &s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		}
+
+		var buf aws.WriteAtBuffer
+		if _, err := l.downloader.Download(&buf, input); err != nil {
+			return err
+		}
+
+		file, err := os.Create(filepath.Join(dir, key))
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		if _, err := file.Write(buf.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (l *Lambda) downloadFile(bucket string, key string) error {
@@ -167,6 +194,11 @@ func main() {
 		scanner:    &ClamAvScanner{},
 		s3:         s3.New(sess),
 		downloader: s3manager.NewDownloader(sess),
+	}
+
+	err := l.downloadDefinitions("/tmp/clamav", os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"), []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"})
+	if err != nil {
+		log.Printf("downloading new definitions failed: %v", err)
 	}
 
 	lambda.Start(l.HandleEvent)
