@@ -20,9 +20,7 @@ jobs:
         cp -r vendor package
         cp go.mod package
         cp go.sum package
-        cp scanner.go package
-        cp main.go package
-        cp main_test.go package
+        cp -r cmd package
         zip -r package.zip package
     - name: Upload to Veracode and scan
       uses: veracode/veracode-uploadandscan-action@master
