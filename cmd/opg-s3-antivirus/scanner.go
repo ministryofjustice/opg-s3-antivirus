@@ -10,7 +10,7 @@ type ClamAvScanner struct {
 }
 
 func (s *ClamAvScanner) ScanFile(path string) (bool, error) {
-	cmd := exec.Command("./bin/clamscan", "--stdout", "-d", "/var/lib/clamav", path)
+	cmd := exec.Command("./bin/clamscan", "--stdout", "-d", "/tmp/clamav", path)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
