@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Create bucket for definitions
+awslocal s3api create-bucket \
+    --acl private \
+    --region eu-west-1 \
+    --bucket "virus-definitions"
+
+awslocal lambda create-function \
+         --function-name antivirus-update \
+         --code ImageUri=antivirus-update-function:latest \
+         --role arn:aws:iam::000000000:role/lambda-ex
+
 # Create Private Bucket
 awslocal s3api create-bucket \
     --acl private \
@@ -23,7 +34,7 @@ awslocal s3api put-bucket-policy \
     --bucket "uploads-bucket"
 
 awslocal lambda create-function \
-         --function-name myfunction \
+         --function-name antivirus \
          --code ImageUri=antivirus-function:latest \
          --role arn:aws:iam::000000000:role/lambda-ex
 
@@ -31,7 +42,7 @@ echo '{
     "LambdaFunctionConfigurations": [
         {
             "Id": "bucket-av-scan",
-            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:myfunction",
+            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:antivirus",
             "Events": [
                 "s3:ObjectCreated:Put"
             ]
