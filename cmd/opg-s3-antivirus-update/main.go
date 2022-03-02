@@ -77,9 +77,10 @@ func (l *Lambda) uploadDefinitions() error {
 		}
 
 		input := &s3manager.UploadInput{
-			Bucket: aws.String(l.bucket),
-			Key:    aws.String(key),
-			Body:   file,
+			Bucket:               aws.String(l.bucket),
+			Key:                  aws.String(key),
+			Body:                 file,
+			ServerSideEncryption: aws.String("AES256"),
 		}
 
 		if _, err := l.uploader.Upload(input); err != nil {

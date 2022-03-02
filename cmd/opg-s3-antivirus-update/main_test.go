@@ -30,7 +30,7 @@ type mockUploader struct {
 }
 
 func (m *mockUploader) Upload(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
-	args := m.Called(*input.Bucket, *input.Key, input.Body)
+	args := m.Called(*input.Bucket, *input.Key, input.Body, *input.ServerSideEncryption)
 	return nil, args.Error(0)
 }
 
@@ -85,7 +85,7 @@ func TestHandleEvent(t *testing.T) {
 		On("Update").Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "a", mock.Anything).
+		On("Upload", "a-bucket", "a", mock.Anything, "AES256").
 		Run(func(args mock.Arguments) {
 			r := args[2].(io.Reader)
 			data, _ := io.ReadAll(r)
@@ -94,7 +94,7 @@ func TestHandleEvent(t *testing.T) {
 		Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "b", mock.Anything).
+		On("Upload", "a-bucket", "b", mock.Anything, "AES256").
 		Run(func(args mock.Arguments) {
 			r := args[2].(io.Reader)
 			data, _ := io.ReadAll(r)
@@ -147,11 +147,11 @@ func TestHandleEventFirstRun(t *testing.T) {
 		On("Update").Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "a", mock.Anything).
+		On("Upload", "a-bucket", "a", mock.Anything, "AES256").
 		Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "b", mock.Anything).
+		On("Upload", "a-bucket", "b", mock.Anything, "AES256").
 		Return(nil)
 
 	response, err := l.HandleEvent(Event{})

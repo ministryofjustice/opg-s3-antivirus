@@ -34,7 +34,7 @@ awslocal s3api put-bucket-policy \
     --bucket "uploads-bucket"
 
 awslocal lambda create-function \
-         --function-name antivirus \
+         --function-name function \
          --code ImageUri=antivirus-function:latest \
          --role arn:aws:iam::000000000:role/lambda-ex
 
@@ -42,7 +42,7 @@ echo '{
     "LambdaFunctionConfigurations": [
         {
             "Id": "bucket-av-scan",
-            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:antivirus",
+            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:function",
             "Events": [
                 "s3:ObjectCreated:Put"
             ]
