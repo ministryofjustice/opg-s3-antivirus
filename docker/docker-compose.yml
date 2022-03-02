@@ -16,6 +16,9 @@ services:
       ANTIVIRUS_TAG_VALUE_PASS: ok
       ANTIVIRUS_TAG_VALUE_FAIL: infected
       ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
+    volumes:
+      - "../.aws-lambda-rie:/aws-lambda"
+    entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
 
   antivirus-update-function:
     image: antivirus-update-function:latest
@@ -28,6 +31,9 @@ services:
       AWS_ACCESS_KEY_ID: localstack
       AWS_SECRET_ACCESS_KEY: localstack
       ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
+    volumes:
+      - "../.aws-lambda-rie:/aws-lambda"
+    entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
 
   localstack:
     image: localstack/localstack:0.13
@@ -42,7 +48,7 @@ services:
       SERVICES: s3,lambda
       LAMBDA_EXECUTOR: docker
       LAMBDA_REMOVE_CONTAINERS: "true"
-      LAMBDA_FORWARD_URL: http://antivirus-function:9001
+      LAMBDA_FORWARD_URL: http://antivirus-function:8080
       DOCKER_HOST: unix:///var/run/docker.sock
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:4566 || exit 1"]

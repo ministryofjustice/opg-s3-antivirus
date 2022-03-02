@@ -8,7 +8,7 @@ import (
 type Freshclam struct{}
 
 func (c *Freshclam) Update() error {
-	cmd := exec.Command("./bin/freshclam")
+	cmd := exec.Command("freshclam", "--config-file=/etc/freshclam.conf")
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
