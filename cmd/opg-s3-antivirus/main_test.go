@@ -28,6 +28,11 @@ type mockScanner struct {
 	mock.Mock
 }
 
+func (m *mockScanner) StartDaemon() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 func (m *mockScanner) ScanFile(path string) (bool, error) {
 	args := m.Called(path)
 	return args.Bool(0), args.Error(1)

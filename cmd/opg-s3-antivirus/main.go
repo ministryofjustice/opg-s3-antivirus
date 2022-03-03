@@ -44,6 +44,7 @@ type Downloader interface {
 }
 
 type Scanner interface {
+	StartDaemon() error
 	ScanFile(path string) (bool, error)
 }
 
@@ -199,6 +200,11 @@ func main() {
 	err := l.downloadDefinitions("/tmp/clamav", os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"), []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"})
 	if err != nil {
 		log.Printf("downloading new definitions failed: %v", err)
+	}
+
+	err = l.scanner.StartDaemon()
+	if err != nil {
+		log.Printf("error starting damon: %v", err)
 	}
 
 	lambda.Start(l.HandleEvent)

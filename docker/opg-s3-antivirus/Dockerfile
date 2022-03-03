@@ -15,6 +15,7 @@ FROM alpine:3.15
 
 RUN apk update && apk add --no-cache clamav
 
+COPY ./clamd.conf /etc
 COPY --from=build-env /go/bin/main /var/task/main
 
 ENTRYPOINT [ "/var/task/main" ]
