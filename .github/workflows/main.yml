@@ -14,18 +14,40 @@ jobs:
       uses: actions/checkout@v2
 
     - run: go mod vendor
-    - name: Build Veracode Package
+    - name: Build Veracode package for scan function
       run: |
         mkdir package
         cp -r vendor package
         cp go.mod package
         cp go.sum package
-        cp -r cmd package
+        cp -r cmd/opg-s3-antivirus/* package
         zip -r package.zip package
-    - name: Upload to Veracode and scan
+    - name: Upload scan package to Veracode
       uses: veracode/veracode-uploadandscan-action@master
       with:
         appname: 'opg-s3-antivirus'
+        filepath: './package.zip'
+        vid: '${{ secrets.CYBERSECURITY_VERACODE_API_ID }}'
+        vkey: '${{ secrets.CYBERSECURITY_VERACODE_API_KEY }}'
+
+    - name: Cleanup
+      run: |
+        rm -rf package
+        rm package.zip
+
+    - run: go mod vendor
+    - name: Build Veracode package for update function
+      run: |
+        mkdir package
+        cp -r vendor package
+        cp go.mod package
+        cp go.sum package
+        cp -r cmd/opg-s3-antivirus-update/* package
+        zip -r package.zip package
+    - name: Upload update package to Veracode
+      uses: veracode/veracode-uploadandscan-action@master
+      with:
+        appname: 'opg-s3-antivirus-update'
         filepath: './package.zip'
         vid: '${{ secrets.CYBERSECURITY_VERACODE_API_ID }}'
         vkey: '${{ secrets.CYBERSECURITY_VERACODE_API_KEY }}'
