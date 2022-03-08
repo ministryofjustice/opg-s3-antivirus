@@ -61,7 +61,7 @@ func createTestEvent() ObjectCreatedEvent {
 	event := ObjectCreatedEvent{}
 	eventRecord := EventRecord{}
 	eventRecord.S3.Bucket.Name = "my-bucket"
-	eventRecord.S3.Object.Key = "file-key"
+	eventRecord.S3.Object.Key = "file%2Dkey"
 	event.Records = append(event.Records, eventRecord)
 
 	return event
@@ -173,6 +173,27 @@ func TestHandleEventHandlesDuplicateTags(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.Equal(t, MyResponse{"scanning complete, tagged with fail"}, response)
+
+	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
+}
+
+func TestReportsFailedUnescape(t *testing.T) {
+	downloader := new(mockDownloader)
+	scanner := new(mockScanner)
+	mockS3 := new(mockS3Tagger)
+
+	l := &Lambda{
+		downloader: downloader,
+		scanner:    scanner,
+		s3:         mockS3,
+	}
+
+	event := createTestEvent()
+	event.Records[0].S3.Object.Key = "bad key%%%"
+	response, err := l.HandleEvent(event)
+
+	assert.Equal(t, "failed to unescape object key: invalid URL escape \"%%%\"", err.Error())
+	assert.Equal(t, MyResponse{""}, response)
 
 	mock.AssertExpectationsForObjects(t, downloader, scanner, mockS3)
 }
