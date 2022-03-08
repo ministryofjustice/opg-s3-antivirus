@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -141,7 +142,12 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 
 func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	bucketName := event.Records[0].S3.Bucket.Name
-	objectKey := event.Records[0].S3.Object.Key
+	objectKey, err := url.QueryUnescape(event.Records[0].S3.Object.Key)
+
+	if err != nil {
+		return MyResponse{}, fmt.Errorf("failed to get object key: %w", err)
+	}
+
 	log.Printf("downloading %s from %s", objectKey, bucketName)
 
 	f, err := os.CreateTemp("/tmp", "file")

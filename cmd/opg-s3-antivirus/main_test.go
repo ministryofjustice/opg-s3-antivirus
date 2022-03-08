@@ -61,7 +61,7 @@ func createTestEvent() ObjectCreatedEvent {
 	event := ObjectCreatedEvent{}
 	eventRecord := EventRecord{}
 	eventRecord.S3.Bucket.Name = "my-bucket"
-	eventRecord.S3.Object.Key = "file-key"
+	eventRecord.S3.Object.Key = "file%2Dkey"
 	event.Records = append(event.Records, eventRecord)
 
 	return event
