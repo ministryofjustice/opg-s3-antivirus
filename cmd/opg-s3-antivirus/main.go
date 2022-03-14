@@ -181,6 +181,11 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	}
 
 	log.Printf("scanning complete, tagged with %s", statusString)
+
+	if err := os.Remove(f.Name()); err != nil {
+		return MyResponse{}, fmt.Errorf("failed to delete file: %w", err)
+	}
+
 	return MyResponse{Message: fmt.Sprintf("scanning complete, tagged with %s", statusString)}, nil
 }
 
