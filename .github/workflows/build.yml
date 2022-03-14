@@ -219,3 +219,28 @@ jobs:
           else
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
           fi
+
+  push-tags:
+    runs-on: ubuntu-latest
+    needs: push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::997462338508:role/sirius-actions-ci
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions
+
+      - name: Install AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+
+      - name: Push Tag to Parameter Store
+        run: |
+          aws ssm put-parameter --name "opg-s3-antivirus-production-tag" --type "String" --value "${{ needs.push.outputs.tag }}" --overwrite --region=eu-west-1
