@@ -154,6 +154,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if err != nil {
 		return MyResponse{}, fmt.Errorf("failed to create file: %w", err)
 	}
+	defer os.Remove(f.Name())
 	defer f.Close()
 
 	if err := l.downloadFile(f, bucketName, objectKey); err != nil {
