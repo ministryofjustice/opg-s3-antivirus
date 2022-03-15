@@ -154,7 +154,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if err != nil {
 		return MyResponse{}, fmt.Errorf("failed to create file: %w", err)
 	}
-	defer f.Close()
+	defer os.Remove(f.Name())
 
 	if err := l.downloadFile(f, bucketName, objectKey); err != nil {
 		log.Print(err)
@@ -181,6 +181,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	}
 
 	log.Printf("scanning complete, tagged with %s", statusString)
+
 	return MyResponse{Message: fmt.Sprintf("scanning complete, tagged with %s", statusString)}, nil
 }
 
