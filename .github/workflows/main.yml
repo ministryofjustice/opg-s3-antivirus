@@ -29,6 +29,7 @@ jobs:
         filepath: './package.zip'
         vid: '${{ secrets.CYBERSECURITY_VERACODE_API_ID }}'
         vkey: '${{ secrets.CYBERSECURITY_VERACODE_API_KEY }}'
+        deleteIncompleteScan: true
 
     - name: Cleanup
       run: |
