@@ -4,6 +4,6 @@ go 1.16
 
 require (
 	github.com/aws/aws-lambda-go v1.30.0
-	github.com/aws/aws-sdk-go v1.43.42
+	github.com/aws/aws-sdk-go v1.43.45
 	github.com/stretchr/testify v1.7.1
 )
