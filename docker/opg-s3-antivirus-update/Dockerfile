@@ -15,6 +15,12 @@ FROM alpine:3.15
 
 RUN apk update && apk add --no-cache clamav
 
+RUN apk update && \
+    apk upgrade \
+    libssl1.1 \
+    libcrypto1.1 && \
+    rm -rf /var/cache/apk/*
+
 RUN mkdir -p /tmp/clamav && chown -R clamav:clamav /tmp/clamav
 
 COPY ./freshclam.conf /etc
