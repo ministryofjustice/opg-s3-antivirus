@@ -5,6 +5,7 @@ set -euo pipefail
 awslocal s3api create-bucket \
     --acl private \
     --region eu-west-1 \
+    --create-bucket-configuration LocationConstraint=eu-west-1 \
     --bucket "virus-definitions"
 
 awslocal lambda create-function \
@@ -16,6 +17,7 @@ awslocal lambda create-function \
 awslocal s3api create-bucket \
     --acl private \
     --region eu-west-1 \
+    --create-bucket-configuration LocationConstraint=eu-west-1 \
     --bucket "uploads-bucket"
 
 # Add Public Access Block
