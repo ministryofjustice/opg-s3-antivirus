@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache Images
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/images
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
@@ -43,7 +43,7 @@ jobs:
       - uses: unfor19/install-aws-cli-action@v1
 
       - name: Cache Go Dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -115,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache Images
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/images
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
@@ -148,7 +148,7 @@ jobs:
       - uses: unfor19/install-aws-cli-action@v1
 
       - name: Cache Images
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/images
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
