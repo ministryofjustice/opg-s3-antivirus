@@ -85,7 +85,7 @@ jobs:
           fetch-depth: 2
 
       - name: Run linting
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
 
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
