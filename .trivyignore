@@ -1,0 +1,3 @@
+# Ignore AWS Go SDK Vulnerability as it's not fixed yet.
+CVE-2020-8911
+CVE-2020-8912
