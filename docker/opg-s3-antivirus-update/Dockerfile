@@ -11,7 +11,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus-update
 
-FROM alpine:3.17
+FROM alpine:3
 
 RUN apk update && apk add --no-cache clamav
 

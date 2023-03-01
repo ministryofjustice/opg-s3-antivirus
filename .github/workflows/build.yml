@@ -1,6 +1,8 @@
 name: Test & Build
 
 on:
+  schedule:
+    - cron: "00 10 * * 1"
   pull_request:
     branches:
       - main

@@ -10,7 +10,7 @@ catch() {
 docker compose -f docker/docker-compose.yml up --wait localstack
 docker compose -f docker/docker-compose.yml exec -T localstack bash -c '. /scripts/wait/wait-until-s3-ready.sh'
 
-docker compose -f docker/docker-compose.yml exec -T localstack awslocal lambda invoke --endpoint http://antivirus-update-function:8080 --no-sign-request --function-name function --payload '{}' /dev/stdout
+docker compose -f docker/docker-compose.yml exec -T localstack awslocal lambda invoke --endpoint http://antivirus-update-function:8080 --no-sign-request  --cli-read-timeout 120 --function-name function --payload '{}' /dev/stdout
 docker compose -f docker/docker-compose.yml exec -T localstack awslocal s3api list-objects --bucket virus-definitions
 docker compose -f docker/docker-compose.yml restart antivirus-function
 
