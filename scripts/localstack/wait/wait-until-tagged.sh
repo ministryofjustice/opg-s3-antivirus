@@ -7,7 +7,7 @@ iterations=0
 
 buckets=""
 
-while [[ "$iterations" -lt 60 ]]
+while [[ "$iterations" -lt 120 ]]
 do
   tags=$(awslocal s3api get-object-tagging --bucket uploads-bucket --key $1 2> /dev/null) || true
 

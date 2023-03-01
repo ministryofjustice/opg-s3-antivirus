@@ -11,6 +11,7 @@ awslocal s3api create-bucket \
 awslocal lambda create-function \
          --function-name antivirus-update \
          --code ImageUri=antivirus-update-function:latest \
+         --timeout 120 \
          --role arn:aws:iam::000000000:role/lambda-ex
 
 # Create Private Bucket
