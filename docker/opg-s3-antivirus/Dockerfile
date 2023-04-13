@@ -20,6 +20,7 @@ RUN apk update && \
     libcrypto3 \
     libcurl \
     libssl3 \
+    libxml2 \
     openssl && \
     rm -rf /var/cache/apk/*
 
