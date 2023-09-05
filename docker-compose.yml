@@ -1,0 +1,88 @@
+---
+version: "3.6"
+
+services:
+  s3-antivirus:
+    image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
+    build:
+      dockerfile: docker/opg-s3-antivirus/Dockerfile
+    environment:
+      AWS_REGION: eu-west-1
+      AWS_S3_ENDPOINT: http://localstack:4566
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      ANTIVIRUS_TAG_KEY: virus-scan-status
+      ANTIVIRUS_TAG_VALUE_PASS: ok
+      ANTIVIRUS_TAG_VALUE_FAIL: infected
+      ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
+    volumes:
+      - ".aws-lambda-rie:/aws-lambda"
+    entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
+
+  s3-antivirus-update:
+    image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest
+    build:
+      dockerfile: docker/opg-s3-antivirus-update/Dockerfile
+    environment:
+      AWS_REGION: eu-west-1
+      AWS_S3_ENDPOINT: http://localstack:4566
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      ANTIVIRUS_DEFINITIONS_BUCKET: virus-definitions
+    volumes:
+      - ".aws-lambda-rie:/aws-lambda"
+    entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
+
+  localstack:
+    image: localstack/localstack:0.14
+    depends_on: [s3-antivirus, s3-antivirus-update]
+    volumes:
+      - "./scripts/localstack/init:/docker-entrypoint-initaws.d"
+      - "./scripts/localstack/wait:/scripts/wait"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      DEFAULT_REGION: eu-west-1
+      HOSTNAME_EXTERNAL: localstack
+      SERVICES: s3,lambda
+      LAMBDA_EXECUTOR: docker
+      LAMBDA_REMOVE_CONTAINERS: "true"
+      LAMBDA_FORWARD_URL: http://s3-antivirus:8080
+      DOCKER_HOST: unix:///var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:4566 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  go-lint:
+    image: golangci/golangci-lint:v1.53.3
+    working_dir: /go/src/app
+    volumes:
+      - ./:/go/src/app
+      - ./.cache/golangci-lint/v1.53.3:/root/.cache
+    command: golangci-lint run -v --timeout 5m
+
+  go-sec:
+    image: securego/gosec
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: -no-fail -fmt sarif -out test-results/go-sec.sarif -exclude-dir=.gocache /app/...
+
+  test-runner:
+    image: s3-antivirius-test-runner:latest
+    build:
+      context: docker/test-runner/
+    command: gotestsum --junitfile test-results/unit-tests.xml -- ./... -coverprofile=test-results/test-coverage.txt
+    working_dir: /go/src/app
+    volumes:
+      - ./:/go/src/app
+      - ./.gocache:/go/pkg/mod
+
+  trivy:
+    image: aquasec/trivy:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.trivy-cache:/root/.cache
+      - ./test-results:/test-results
