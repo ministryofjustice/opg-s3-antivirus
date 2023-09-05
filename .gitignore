@@ -1,0 +1,4 @@
+.cache
+.gocache
+.trivy-cache
+test-results
