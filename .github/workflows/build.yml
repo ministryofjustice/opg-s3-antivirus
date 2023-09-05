@@ -28,44 +28,27 @@ jobs:
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
       - name: Build Images
         run: |
-          docker-compose -f docker/docker-compose.yml build antivirus-function
-          docker-compose -f docker/docker-compose.yml build antivirus-update-function
+          make build
           mkdir -p /tmp/images
-          docker save -o /tmp/images/antivirus-function.tar antivirus-function:latest
-          docker save -o /tmp/images/antivirus-update-function.tar antivirus-update-function:latest
+          docker save -o /tmp/images/antivirus-function.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:latest
+          docker save -o /tmp/images/antivirus-update-function.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:latest
 
   unit-test:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '^1.17.7'
-      - uses: unfor19/install-aws-cli-action@v1
 
       - name: Cache Go Dependencies
         uses: actions/cache@v2
         with:
-          path: ~/go/pkg/mod
+          path: .gocache
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install modules
-        run: |
-          go mod download
-
-      - name: Setup gotestsum
-        uses: autero1/action-gotestsum@v1.0.0
-        with:
-          gotestsum_version: 1.6.4
-
-      - run: mkdir -p test-results
-
       - name: Run Unit Tests
-        run: |
-          gotestsum --junitfile test-results/unit-tests.xml -- ./... -coverprofile=test-results/test-coverage.txt
+        run: make unit-test
 
       - name: Upload Code Coverage
         uses: codecov/codecov-action@v1
@@ -87,17 +70,16 @@ jobs:
           fetch-depth: 2
 
       - name: Run linting
-        uses: golangci/golangci-lint-action@v2
+        run: make lint
 
       - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
-        with:
-          args: '-no-fail -fmt sarif -out results.sarif ./...'
+        run: make go-sec
+
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v1
         if: always()
         with:
-          sarif_file: results.sarif
+          sarif_file: test-results/go-sec.sarif
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
@@ -125,7 +107,7 @@ jobs:
         run: |
           docker load -i /tmp/images/antivirus-function.tar
       - name: Run Acceptance Tests
-        run: bash ./test.sh
+        run: make acceptance-test
 
   push:
     name: "Build & Push Containers"
@@ -161,17 +143,13 @@ jobs:
           docker load -i /tmp/images/antivirus-update-function.tar
 
       - name: Trivy Image Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: antivirus-function:latest
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+        run: make scan
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'test-results/trivy.sarif'
 
       - name: Bump version
         id: bump_version
@@ -204,13 +182,13 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: s3-antivirus
         run: |
-          docker tag antivirus-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker tag antivirus-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:${{ steps.bump_version.outputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:main-${{ steps.bump_version.outputs.tag }}
             # We want all of the tags pushed
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
           else
-            docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-function:${{ steps.bump_version.outputs.tag }}
           fi
 
       - name: Push Update Function Container
@@ -218,13 +196,13 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: s3-antivirus-update
         run: |
-          docker tag antivirus-update-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker tag antivirus-update-function:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:${{ steps.bump_version.outputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
             # We want all of the tags pushed
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:main-${{ steps.bump_version.outputs.tag }}
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
           else
-            docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.bump_version.outputs.tag }}
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/antivirus-update-function:${{ steps.bump_version.outputs.tag }}
           fi
 
   push-tags:
