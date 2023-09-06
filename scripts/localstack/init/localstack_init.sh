@@ -10,7 +10,7 @@ awslocal s3api create-bucket \
 
 awslocal lambda create-function \
          --function-name antivirus-update \
-         --code ImageUri=antivirus-update-function:latest \
+         --code ImageUri=s3-antivirus-update:latest \
          --timeout 120 \
          --role arn:aws:iam::000000000:role/lambda-ex
 
@@ -38,7 +38,7 @@ awslocal s3api put-bucket-policy \
 
 awslocal lambda create-function \
          --function-name function \
-         --code ImageUri=antivirus-function:latest \
+         --code ImageUri=s3-antivirus:latest \
          --role arn:aws:iam::000000000:role/lambda-ex
 
 echo '{
