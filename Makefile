@@ -1,7 +1,7 @@
 all: lint go-sec unit-test build scan acceptance-test down
 
 test-results:
-	mkdir -p -m 0777 test-results .gocache cypress/screenshots .trivy-cache
+	mkdir -p -m 0777 .cache test-results .gocache cypress/screenshots .trivy-cache
 
 setup-directories: test-results
 
