@@ -235,4 +235,4 @@ jobs:
 
       - name: Push Tag to Parameter Store
         run: |
-          aws ssm put-parameter --name "opg-s3-antivirus-production-tag" --type "String" --value "${{ needs.push.outputs.tag }}" --overwrite --region=eu-west-1
+          aws ssm put-parameter --name "opg-s3-antivirus-latest-green-build" --type "String" --value "${{ needs.push.outputs.tag }}" --overwrite --region=eu-west-1
