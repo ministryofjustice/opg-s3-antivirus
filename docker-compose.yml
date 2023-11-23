@@ -34,20 +34,15 @@ services:
     entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
 
   localstack:
-    image: localstack/localstack:0.14
+    image: localstack/localstack:3.0
     depends_on: [s3-antivirus, s3-antivirus-update]
     volumes:
-      - "./scripts/localstack/init:/docker-entrypoint-initaws.d"
+      - "./scripts/localstack/init:/etc/localstack/init/ready.d"
       - "./scripts/localstack/wait:/scripts/wait"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/localstack/lambda-src:/lambda"
     environment:
-      DEFAULT_REGION: eu-west-1
-      HOSTNAME_EXTERNAL: localstack
-      SERVICES: s3,lambda
-      LAMBDA_EXECUTOR: docker
-      LAMBDA_REMOVE_CONTAINERS: "true"
-      LAMBDA_FORWARD_URL: http://s3-antivirus:8080
-      DOCKER_HOST: unix:///var/run/docker.sock
+      AWS_DEFAULT_REGION: eu-west-1
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:4566 || exit 1"]
       interval: 15s
