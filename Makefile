@@ -24,7 +24,7 @@ scan: setup-directories
 acceptance-test:
 	docker compose up --wait localstack
 	docker compose exec -T localstack bash -c '. /scripts/wait/wait-until-s3-ready.sh'
-	docker compose exec -T localstack awslocal lambda invoke --endpoint http://s3-antivirus-update:8080 --no-sign-request  --cli-read-timeout 120 --function-name function --payload '{}' /dev/stdout
+	docker compose exec -T localstack awslocal lambda invoke --cli-read-timeout 120 --function-name s3-antivirus-update --payload '{}' /dev/stdout
 	docker compose exec -T localstack awslocal s3api list-objects --bucket virus-definitions
 	docker compose restart s3-antivirus
 	sleep 10
