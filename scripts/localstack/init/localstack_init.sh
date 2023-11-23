@@ -8,11 +8,14 @@ awslocal s3api create-bucket \
     --create-bucket-configuration LocationConstraint=eu-west-1 \
     --bucket "virus-definitions"
 
+(cd /lambda && zip /tmp/forwarder.zip forwarder.py)
 awslocal lambda create-function \
-         --function-name antivirus-update \
-         --code ImageUri=s3-antivirus-update:latest \
+         --function-name s3-antivirus-update \
+         --runtime python3.11 \
+         --zip-file fileb:///tmp/forwarder.zip \
+         --handler forwarder.handler \
          --timeout 120 \
-         --role arn:aws:iam::000000000:role/lambda-ex
+         --role arn:aws:iam::000000000000:role/lambda-ex
 
 # Create Private Bucket
 awslocal s3api create-bucket \
@@ -36,16 +39,21 @@ awslocal s3api put-bucket-policy \
     --policy '{ "Statement": [ { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::uploads-bucket/*", "Condition":  { "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" } } }, { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::uploads-bucket/*", "Condition":  { "Bool": { "aws:SecureTransport": false } } } ] }' \
     --bucket "uploads-bucket"
 
+(cd /lambda && zip /tmp/forwarder.zip forwarder.py)
 awslocal lambda create-function \
-         --function-name function \
-         --code ImageUri=s3-antivirus:latest \
-         --role arn:aws:iam::000000000:role/lambda-ex
+         --function-name s3-antivirus \
+         --runtime python3.11 \
+         --zip-file fileb:///tmp/forwarder.zip \
+         --handler forwarder.handler \
+         --role arn:aws:iam::000000000000:role/lambda-ex
+
+awslocal lambda wait function-active-v2 --function-name s3-antivirus
 
 echo '{
     "LambdaFunctionConfigurations": [
         {
             "Id": "bucket-av-scan",
-            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:function",
+            "LambdaFunctionArn": "arn:aws:lambda:eu-west-1:000000000000:function:s3-antivirus",
             "Events": [
                 "s3:ObjectCreated:Put"
             ]
