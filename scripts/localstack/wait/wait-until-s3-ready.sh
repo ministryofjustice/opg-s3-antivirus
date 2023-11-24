@@ -7,12 +7,15 @@ iterations=0
 
 buckets=""
 
+awslocal lambda wait function-active-v2 --function-name s3-antivirus
+awslocal lambda wait function-active-v2 --function-name s3-antivirus-update
+
 while [[ "$iterations" -lt 60 ]]
 do
   buckets=$(awslocal s3 ls)
 
   if [[ $buckets = *uploads-bucket* ]] &&
-     [[ $buckets = *virus-definitions* ]] 
+     [[ $buckets = *virus-definitions* ]]
   then
     echo "Found all expected buckets after $iterations seconds"
     exit 0
