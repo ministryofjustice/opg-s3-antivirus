@@ -3,7 +3,7 @@ module github.com/ministryofjustice/opg-s3-antivirus
 go 1.16
 
 require (
-	github.com/aws/aws-lambda-go v1.44.0
-	github.com/aws/aws-sdk-go v1.49.16
+	github.com/aws/aws-lambda-go v1.45.0
+	github.com/aws/aws-sdk-go v1.49.21
 	github.com/stretchr/testify v1.8.4
 )
