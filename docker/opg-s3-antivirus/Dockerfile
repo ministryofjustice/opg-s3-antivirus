@@ -1,4 +1,4 @@
-FROM golang:1.21.6 AS build-env
+FROM golang:1.21.7 AS build-env
 
 WORKDIR /app
 
