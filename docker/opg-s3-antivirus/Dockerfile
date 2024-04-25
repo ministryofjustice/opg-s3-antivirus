@@ -11,18 +11,16 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus
 
-FROM alpine:3
+FROM public.ecr.aws/lambda/provided:al2023
 
-RUN apk update && apk add --no-cache clamav
+RUN dnf update && dnf --best install -y clamav && dnf clean all
 
-RUN apk update && \
-    apk upgrade \
-    libcrypto3 \
+RUN dnf update && \
+    dnf upgrade \
     libcurl \
-    libssl3 \
     libxml2 \
     openssl && \
-    rm -rf /var/cache/apk/*
+    dnf clean all
 
 COPY ./clamd.conf /etc
 COPY --from=build-env /go/bin/main /var/task/main
