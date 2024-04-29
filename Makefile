@@ -21,6 +21,11 @@ scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 	docker compose run --rm trivy image --format sarif --output /test-results/trivy.sarif --exit-code 1 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 
+check-clam:
+	docker compose up s3-antivirus -d
+	docker compose exec -T s3-antivirus bash -c 'clamdscan --version'
+	docker compose exec -T s3-antivirus bash -c 'clamd --config-file "/etc/clamd.conf"'
+
 acceptance-test:
 	docker compose up --wait localstack
 	docker compose exec -T localstack bash -c '. /scripts/wait/wait-until-s3-ready.sh'
