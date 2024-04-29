@@ -11,18 +11,19 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus
 
-FROM public.ecr.aws/lambda/provided:al2023.2024.04.29.12-x86_64
+FROM public.ecr.aws/lambda/provided:al2
 
 ENV PATH="${PATH}:/usr/sbin"
 
-RUN dnf update && dnf --best install -y clamav clamd && dnf clean all
+RUN yum update -y && yum install -y clamav clamd && yum clean all
 
-RUN dnf update && \
-    dnf upgrade \
+RUN yum update -y && \
+    yum upgrade -y \
     libcurl \
     libxml2 \
     openssl && \
-    dnf clean all
+    yum clean all
+
 
 COPY ./clamd.conf /etc
 COPY --from=build-env /go/bin/main /var/task/main
