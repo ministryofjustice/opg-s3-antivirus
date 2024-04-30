@@ -15,13 +15,13 @@ FROM public.ecr.aws/lambda/provided:al2
 
 ENV PATH="${PATH}:/usr/sbin"
 
-RUN yum update -y && yum install -y clamav clamd && yum clean all
+RUN yum update -y && yum install -y clamav-0.103.9-1.amzn2.0.2 clamd-0.103.9-1.amzn2.0.2 && yum clean all
 
 RUN yum update -y && \
     yum upgrade -y \
-    libcurl \
-    libxml2 \
-    openssl && \
+    libcurl-8.3.0-1.amzn2.0.6 \
+    libxml2-2.9.1-6.amzn2.5.13 \
+    openssl-1:1.0.2k-24.amzn2.0.12 && \
     yum clean all
 
 

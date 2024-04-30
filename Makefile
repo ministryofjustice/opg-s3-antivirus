@@ -23,6 +23,7 @@ scan: setup-directories
 
 check-clam:
 	docker compose up s3-antivirus -d
+	docker compose exec -T s3-antivirus bash -c 'yum list available clam\* libcurl\* libxml2\* openssl\*'
 	docker compose exec -T s3-antivirus bash -c 'clamdscan --version'
 	docker compose exec -T s3-antivirus bash -c 'clamd --config-file "/etc/clamd.conf"'
 
