@@ -32,12 +32,9 @@ zip-prep:
 zip-build: zip-prep
 	docker run --rm \
 		-v `pwd`/build:/app:Z \
-		golang:1.22.2 \
-		/bin/bash -c "cd /app && ./build-zip.sh"
+		golang:1.22.2-alpine \
+		/bin/sh -c "cd /app && ./build-zip.sh"
 .PHONY: zip-build
-
-
-
 
 scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
