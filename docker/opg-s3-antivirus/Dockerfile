@@ -11,18 +11,19 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus
 
-FROM alpine:3
+FROM public.ecr.aws/lambda/provided:al2
 
-RUN apk update && apk add --no-cache clamav
+ENV PATH="${PATH}:/usr/sbin"
 
-RUN apk update && \
-    apk upgrade \
-    libcrypto3 \
-    libcurl \
-    libssl3 \
-    libxml2 \
-    openssl && \
-    rm -rf /var/cache/apk/*
+RUN yum update -y && yum install -y clamav-0.103.9-1.amzn2.0.2 clamd-0.103.9-1.amzn2.0.2 && yum clean all
+
+RUN yum update -y && \
+    yum upgrade -y \
+    libcurl-8.3.0-1.amzn2.0.6 \
+    libxml2-2.9.1-6.amzn2.5.13 \
+    openssl-1:1.0.2k-24.amzn2.0.12 && \
+    yum clean all
+
 
 COPY ./clamd.conf /etc
 COPY --from=build-env /go/bin/main /var/task/main
