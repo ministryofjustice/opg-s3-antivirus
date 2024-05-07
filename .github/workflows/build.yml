@@ -132,7 +132,7 @@ jobs:
           fetch-depth: '0'
       - name: Lambda Package - Zip Build
         run: |
-          make zip-build
+          make lambda-zip-build
         id: lambda-zip-build
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
@@ -141,7 +141,7 @@ jobs:
           path: build/myFunction.zip
       - name: Cleanup
         run: |
-          make zip-clear
+          make lambda-zip-clear
 
   build-lambda-layer-zip:
     name: "Build Lambda Layer Zip"
@@ -155,18 +155,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - name: Lambda Layer Package - Zip Build
+      - name: Layer Package - Zip Build
         run: |
-          echo "Building Lambda Layer Zip"
-        id: lambda-zip-build
-      # - name: Archive code coverage results
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: code-coverage-report
-      #     path: build/myFunction.zip
-      # - name: Cleanup
-      #   run: |
-      #     make zip-clear
+          make layer-zip-build
+        id: layer-zip-build
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda_layer.zip
+          path: build/lambda_layer.zip
+      - name: Cleanup
+        run: |
+          make layer-zip-clear
   push:
     name: "Build & Push Containers"
     runs-on: ubuntu-latest
