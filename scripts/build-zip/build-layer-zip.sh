@@ -4,20 +4,18 @@ set -e
 
 VERSION=${VERSION:-0.103.9-1.amzn2023.0.2.x86_64}
 
-echo "!!!>>>>>Install utilities for build task"
+printf "Install utilities for build task\n\n"
 dnf update -y
 dnf install -y cpio dnf-plugins-core zip tree
 
-echo "!!!>>>>>Make directory for build"
+printf "Make directory for build\n\n"
 mkdir -p /tmp/build
 pushd /tmp/build
 
-# Download the clamav and clamd package
-echo "!!!>>>>>Download the clamav and clamd package"
+printf "Download the clamav and clamd package\n\n"
 dnf download --downloaddir=/tmp/build clamav-${VERSION} clamd-${VERSION}
 
-# Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-modification-time, extract, make-directories)
-echo "!!!>>>>>Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-modification-time, extract, make-directories)"
+printf "Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-modification-time, extract, make-directories)\n\n"
 rpm2cpio clamav*.rpm | cpio -vimd
 rpm2cpio clamd*.rpm | cpio -vimd
 
@@ -25,8 +23,7 @@ rpm2cpio clamd*.rpm | cpio -vimd
 tree /tmp/build/usr/
 tree /opt/app
 
-# move binaries and lib for zipping
-echo "!!!>>>>>move binaries and lib for zipping"
+printf "move binaries and lib for zipping\n\n"
 mkdir -p bin lib etc
 
 cp /tmp/build/usr/bin/clamdscan bin/.
