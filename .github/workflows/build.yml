@@ -164,6 +164,9 @@ jobs:
         with:
           name: lambda_layer.zip
           path: build/lambda_layer.zip
+      - name: Test layer
+        run: |
+          make layer-zip-test
       - name: Cleanup
         run: |
           make layer-zip-clear
