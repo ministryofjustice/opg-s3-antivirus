@@ -19,9 +19,9 @@ build:
 
 lambda-zip-clear:
 	rm -fr ./build
-.PHONY: zip-clear
+.PHONY: lambda-zip-clear
 
-lambda-zip-prep:
+lambda-zip-prep: lambda-zip-clear
 	mkdir -p ./build && \
 	cp ./scripts/build-zip/build-lambda-zip.sh ./build/ && \
 	cp ./go.mod ./go.sum ./build
@@ -29,15 +29,16 @@ lambda-zip-prep:
 	chmod +x ./build/build-lambda-zip.sh
 .PHONY: zip-prep
 
-lambda-zip-build: zip-prep
+lambda-zip-build: lambda-zip-prep
 	docker run --rm \
 		-v `pwd`/build:/app:Z \
 		golang:1.22.2-alpine \
 		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
-.PHONY: zip-build
+.PHONY: lambda-zip-build
 
 layer-zip-clean:
 	rm -fr ./build
+.PHONY: layer-zip-clear
 
 layer-zip-prep:
 	mkdir -p ./build && \
