@@ -55,6 +55,25 @@ layer-zip-build: layer-zip-prep
 		/bin/bash -c "cd /app && ./build-layer-zip.sh"
 .PHONY: layer-zip-build
 
+layer-zip-test-prep:
+	rm -fr ./build/test && \
+	rm -fr ./build/bin && \
+	rm -fr ./build/lib && \
+	rm -fr ./build/etc && \
+	mkdir -p ./build/test && \
+	cp ./scripts/build-zip/test-layer-zip.sh ./build/test/ && \
+	cp build/lambda_layer.zip ./build/test/ && \
+	chmod +x ./build/test/test-layer-zip.sh
+.PHONY: layer-zip-test-prep
+
+layer-zip-test: layer-zip-test-prep
+	docker run --rm \
+	--platform linux/amd64 \
+		-v `pwd`/build:/app:Z \
+		amazonlinux:2023 \
+		/bin/bash -c "cd /app && ./test/test-layer-zip.sh"
+.PHONY: layer-test
+
 scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 	docker compose run --rm trivy image --format sarif --output /test-results/trivy.sarif --exit-code 1 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
