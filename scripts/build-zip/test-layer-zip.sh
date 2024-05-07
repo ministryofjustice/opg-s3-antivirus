@@ -4,10 +4,13 @@ set -e
 
 printf "Install utilities for test\n\n"
 dnf update -y
-dnf install -y unzip tree
+dnf install -y unzip
 
-unzip lambda_layer.zip
+unzip lambda_layer.zip -d /usr
 
-tree ./
+# export PATH=/app/bin:$PATH
 
-bin/clamdscan --version
+# tree /usr
+
+clamd --version
+clamdscan --version
