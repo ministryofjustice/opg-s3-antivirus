@@ -17,6 +17,44 @@ unit-test: setup-directories
 build:
 	docker compose build --parallel s3-antivirus s3-antivirus-update
 
+lambda-zip-clear:
+	rm -fr ./build
+.PHONY: lambda-zip-clear
+
+lambda-zip-prep: lambda-zip-clear
+	mkdir -p ./build && \
+	cp ./scripts/build-zip/build-lambda-zip.sh ./build/ && \
+	cp ./go.mod ./go.sum ./build
+	cp -R ./cmd/opg-s3-antivirus ./build/ && \
+	chmod +x ./build/build-lambda-zip.sh
+.PHONY: zip-prep
+
+lambda-zip-build: lambda-zip-prep
+	docker run --rm \
+		-v `pwd`/build:/app:Z \
+		golang:1.22.2-alpine \
+		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
+.PHONY: lambda-zip-build
+
+layer-zip-clean:
+	rm -fr ./build
+.PHONY: layer-zip-clear
+
+layer-zip-prep:
+	mkdir -p ./build && \
+	cp ./scripts/build-zip/build-layer-zip.sh  ./build/ && \
+	cp clamd.conf ./build/ && \
+	chmod +x ./build/build-layer-zip.sh
+.PHONY: layer-zip-prep
+
+layer-zip-build: layer-zip-prep
+	docker run --rm \
+		--platform linux/amd64 \
+		-v `pwd`/build:/app:Z \
+		amazonlinux:2023 \
+		/bin/bash -c "cd /app && ./build-layer-zip.sh"
+.PHONY: layer-zip-build
+
 scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 	docker compose run --rm trivy image --format sarif --output /test-results/trivy.sarif --exit-code 1 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
