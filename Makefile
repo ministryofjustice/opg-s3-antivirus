@@ -17,6 +17,25 @@ unit-test: setup-directories
 build:
 	docker compose build --parallel s3-antivirus s3-antivirus-update
 
+zip-clear:
+	rm -fr ./build
+.PHONY: zip-clear
+
+zip-prep:
+	mkdir -p ./build && \
+	cp ./scripts/build-zip/build-zip.sh ./build/ && \
+	cp ./go.mod ./go.sum ./build
+	cp -R ./cmd/opg-s3-antivirus ./build/ && \
+	chmod +x ./build/build-zip.sh
+.PHONY: zip-prep
+
+zip-build: zip-prep
+	docker run --rm \
+		-v `pwd`/build:/app:Z \
+		golang:1.22.2-alpine \
+		/bin/sh -c "cd /app && ./build-zip.sh"
+.PHONY: zip-build
+
 scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 	docker compose run --rm trivy image --format sarif --output /test-results/trivy.sarif --exit-code 1 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
