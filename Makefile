@@ -15,7 +15,7 @@ unit-test: setup-directories
 	docker compose run test-runner
 
 build:
-	docker compose build --parallel s3-antivirus s3-antivirus-update
+	docker compose build --parallel --no-cache s3-antivirus s3-antivirus-update
 
 scan: setup-directories
 	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
