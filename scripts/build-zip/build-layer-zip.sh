@@ -13,16 +13,15 @@ mkdir -p /tmp/build
 pushd /tmp/build
 
 printf "Download the clamav and clamd package\n\n"
-dnf download --downloaddir=/tmp/build --resolve clamav-"${VERSION}" clamd-"${VERSION}"
+dnf download --downloaddir=/tmp/build --arch x86_64  --resolve clamav-"${VERSION}" clamd-"${VERSION}" systemd-libs
 
 printf "Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-modification-time, extract, make-directories)\n\n"
 rpm2cpio clamav*.rpm | cpio -vimd
 rpm2cpio clamd*.rpm | cpio -vimd
 rpm2cpio clamav-lib-*.rpm | cpio -vimd
 
-
-
 # printf "!!!>>>>>Download other package dependencies\n\n"
+rpm2cpio systemd-libs-*.rpm | cpio -vimd
 # rpm2cpio libargon2-*.rpm | cpio -vimd
 # rpm2cpio gzip-*.rpm     | cpio -vimd
 # rpm2cpio pam-*.rpm     | cpio -vimd
