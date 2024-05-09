@@ -13,7 +13,7 @@ mkdir -p /tmp/build
 pushd /tmp/build
 
 printf "Download the clamav and clamd package\n\n"
-dnf download --downloaddir=/tmp/build --arch x86_64  --resolve clamav-"${VERSION}" clamd-"${VERSION}" systemd-libs
+dnf download --downloaddir=/tmp/build --arch x86_64  --resolve clamav-"${VERSION}" clamd-"${VERSION}" systemd-libs libtool-ltdl
 
 printf "Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-modification-time, extract, make-directories)\n\n"
 rpm2cpio clamav*.rpm | cpio -vimd
@@ -22,6 +22,7 @@ rpm2cpio clamav-lib-*.rpm | cpio -vimd
 
 # printf "!!!>>>>>Download other package dependencies\n\n"
 rpm2cpio systemd-libs-*.rpm | cpio -vimd
+rpm2cpio libtool-ltdl-*.rpm | cpio -vimd
 # rpm2cpio libargon2-*.rpm | cpio -vimd
 # rpm2cpio gzip-*.rpm     | cpio -vimd
 # rpm2cpio pam-*.rpm     | cpio -vimd
@@ -41,7 +42,6 @@ rpm2cpio systemd-libs-*.rpm | cpio -vimd
 # rpm2cpio systemd-networkd-*.rpm | cpio -vimd
 # rpm2cpio kmod-libs-*.rpm | cpio -vimd
 # rpm2cpio libdb-*.rpm | cpio -vimd
-# rpm2cpio libtool-ltdl-*.rpm | cpio -vimd
 # rpm2cpio systemd-pam-*.rpm | cpio -vimd
 # rpm2cpio systemd-resolved-*.rpm | cpio -vimd
 # rpm2cpio libxkbcommon-*.rpm | cpio -vimd
