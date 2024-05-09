@@ -19,8 +19,6 @@ printf "Convert clamav and clamd RPM to CPIO stream (-vmid verbose, preserve-mod
 rpm2cpio clamav*.rpm | cpio -vimd
 rpm2cpio clamd*.rpm | cpio -vimd
 rpm2cpio clamav-lib-*.rpm | cpio -vimd
-
-printf "Download other package dependencies\n\n"
 rpm2cpio systemd-libs-*.rpm | cpio -vimd
 rpm2cpio libtool-ltdl-*.rpm | cpio -vimd
 
