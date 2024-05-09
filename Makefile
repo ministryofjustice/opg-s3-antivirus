@@ -52,7 +52,7 @@ layer-zip-build: layer-zip-prep
 	docker run --rm \
 		--platform linux/amd64 \
 		-v `pwd`/build:/app:Z \
-		amazonlinux:2023 \
+		amazonlinux:2023.4.20240416.0 \
 		/bin/bash -c "cd /app && ./build-layer-zip.sh"
 .PHONY: layer-zip-build
 
@@ -71,7 +71,7 @@ layer-zip-test: layer-zip-test-prep
 	docker run --rm \
 	--platform linux/amd64 \
 		-v `pwd`/build:/app:Z \
-		amazonlinux:2023 \
+		amazonlinux:2023.4.20240416.0 \
 		/bin/bash -c "cd /app && ./test/test-layer-zip.sh"
 .PHONY: layer-test
 
