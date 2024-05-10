@@ -6,9 +6,14 @@ printf "Install utilities for test\n\n"
 dnf update -y
 dnf install -y unzip tree
 
-unzip lambda_layer.zip -d /usr
+unzip lambda_layer.zip -d /opt
 
-cat /usr/etc/clamd.conf
+export PATH=/opt/bin:$PATH
+export LD_LIBRARY_PATH=/opt/lib:$LD_LIBRARY_PATH
 
-clamd --config-file /usr/etc/clamd.conf --version
-clamdscan --config-file /usr/etc/clamd.conf --version
+ls -al /opt
+
+cat /opt/etc/clamd.conf
+
+clamd --config-file /opt/etc/clamd.conf --version
+clamdscan --config-file /opt/etc/clamd.conf --version

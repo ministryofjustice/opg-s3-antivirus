@@ -23,15 +23,14 @@ rpm2cpio systemd-libs-*.rpm | cpio -vimd
 rpm2cpio libtool-ltdl-*.rpm | cpio -vimd
 
 printf "move binaries and lib for zipping\n\n"
-mkdir -p bin lib etc lib64
+mkdir -p bin lib etc
 
 cp /tmp/build/usr/bin/clamdscan bin/.
 cp /tmp/build/usr/sbin/clamd bin/.
 cp -R /tmp/build/usr/lib/* lib/.
-cp -R /tmp/build/usr/lib64/* lib64/.
+cp -R /tmp/build/usr/lib64/* lib/.
 cp /app/clamd.conf etc/.
 
 zip -r9 /app/lambda_layer.zip bin
 zip -r9 /app/lambda_layer.zip lib
-zip -r9 /app/lambda_layer.zip lib64
 zip -r9 /app/lambda_layer.zip etc
