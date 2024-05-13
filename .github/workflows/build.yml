@@ -137,7 +137,7 @@ jobs:
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
-          name: myFunction.zip
+          name: myFunction
           path: build/myFunction.zip
       - name: Cleanup
         run: |
@@ -162,7 +162,7 @@ jobs:
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
-          name: lambda_layer.zip
+          name: lambda_layer
           path: build/lambda_layer.zip
       - name: Test layer
         run: |
@@ -266,6 +266,51 @@ jobs:
           else
             docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{ steps.bump_version.outputs.tag }}
           fi
+
+  release-zips:
+    runs-on: ubuntu-latest
+    needs: push
+    # if: github.ref == 'refs/heads/main'
+    steps:
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ needs.push.outputs.tag }}
+          tag_name: ${{ needs.push.outputs.tag }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Get Lambda artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: myFunction
+          path: release
+      - name: Get Lambda Layer artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: lambda_layer
+          path: release
+      - name: upload Lambda artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/myFunction.zip
+          asset_name: myFunction-amd64.zip
+          asset_content_type: application/zip
+      - name: upload Lambda Layer artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/lambda_layer.zip
+          asset_name: lambda_layer-amd64.zip
+          asset_content_type: application/zip
 
   push-tags:
     runs-on: ubuntu-latest
