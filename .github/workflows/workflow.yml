@@ -50,6 +50,9 @@ jobs:
   acceptance-test:
     name: Acceptance Test
     uses: ./.github/workflows/acceptance-test.yml
+    needs:
+      - build
+      - unit-test
 
   push:
     name: "Build & Push Containers"
