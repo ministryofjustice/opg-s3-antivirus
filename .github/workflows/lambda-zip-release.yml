@@ -7,13 +7,6 @@ on:
         description: "Semver Tag"
         required: true
         type: string
-    secrets:
-      aws_access_key_id_actions:
-        description: 'AWS Access Key'
-        required: true
-      aws_secret_access_key_actions:
-        description: 'AWS Secret'
-        required: true
 
 jobs:
   release-zips:
@@ -27,8 +20,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: ${{ needs.push.outputs.tag }}
-          tag_name: ${{ needs.push.outputs.tag }}
+          release_name: ${{ input.tag }}
+          tag_name: ${{ input.tag }}
           # body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
