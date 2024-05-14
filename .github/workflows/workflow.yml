@@ -60,6 +60,7 @@ jobs:
 
   push:
     name: "Build & Push Containers"
+    uses: ./.github/workflows/docker-push.yml
     needs: ['create-tag', 'build', 'unit-test', 'code-test', 'acceptance-test']
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
