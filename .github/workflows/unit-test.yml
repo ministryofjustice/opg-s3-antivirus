@@ -20,10 +20,6 @@ on:
         description: 'Codecov Token'
         required: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   unit-test:
     name: Unit Tests
