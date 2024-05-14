@@ -2,6 +2,7 @@ name: Create Tag
 
 on:
   workflow_call:
+
     outputs:
       tag:
         description: "Semver Tag"
@@ -11,6 +12,9 @@ jobs:
   create_tag:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
       - name: Extract branch name
         run: |
           if [ "${{ github.head_ref }}" == "" ]; then
