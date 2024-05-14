@@ -43,65 +43,13 @@ jobs:
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
-
   code-test:
     name: Code Quality Tests
-    runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # We must fetch at least the immediate parents so that if this is
-          # a pull request then we can checkout the head.
-          fetch-depth: 2
-
-      - name: Run linting
-        run: make lint
-
-      - name: Run Gosec Security Scanner
-        run: make go-sec
-
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: test-results/go-sec.sarif
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.19
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: go
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+    uses: ./.github/workflows/code-test.yml
 
   acceptance-test:
     name: Acceptance Test
-    runs-on: ubuntu-latest
-    needs:
-      - build
-      - unit-test
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache Images
-        uses: actions/cache@v4
-        with:
-          path: /tmp/images
-          key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
-      - name: Restore images
-        run: |
-          docker load -i /tmp/images/s3-antivirus.tar
-      - name: Run Acceptance Tests
-        run: make acceptance-test
+    uses: ./.github/workflows/acceptance-test.yml
 
   push:
     name: "Build & Push Containers"
