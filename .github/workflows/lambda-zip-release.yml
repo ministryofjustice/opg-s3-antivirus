@@ -1,0 +1,53 @@
+name: Release Lambda Zips
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Semver Tag"
+        required: true
+        type: string
+
+jobs:
+  release-zips:
+    runs-on: ubuntu-latest
+    steps:
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          # body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Get Lambda artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: myFunction
+          path: release
+      - name: Get Lambda Layer artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: lambda_layer
+          path: release
+      - name: upload Lambda artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/myFunction.zip
+          asset_name: myFunction-amd64.zip
+          asset_content_type: application/zip
+      - name: upload Lambda Layer artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/lambda_layer.zip
+          asset_name: lambda_layer-amd64.zip
+          asset_content_type: application/zip

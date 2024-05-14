@@ -23,9 +23,8 @@ scan: setup-directories
 
 check-clam:
 	docker compose up s3-antivirus -d
-	docker compose exec -T s3-antivirus bash -c 'yum list available clam\* libcurl\* libxml2\* openssl\*'
 	docker compose exec -T s3-antivirus bash -c 'clamdscan --version'
-	docker compose exec -T s3-antivirus bash -c 'clamd --config-file "/etc/clamd.conf"'
+	docker compose exec -T s3-antivirus bash -c 'clamd --config-file "/opt/etc/clamd.conf"'
 
 acceptance-test:
 	docker compose up --wait localstack
@@ -43,3 +42,60 @@ acceptance-test:
 
 down:
 	docker compose down
+
+lambda-zip-clear:
+	rm -fr ./build
+.PHONY: lambda-zip-clear
+
+lambda-zip-prep:
+	mkdir -p ./build && \
+	cp ./scripts/build-zip/build-lambda-zip.sh ./build/ && \
+	cp ./go.mod ./go.sum ./build
+	cp -R ./cmd/opg-s3-antivirus ./build/ && \
+	chmod +x ./build/build-lambda-zip.sh
+.PHONY: lambda-zip-prep
+
+lambda-zip-build: lambda-zip-prep
+	docker run --rm \
+		--platform linux/amd64 \
+		-v `pwd`/build:/app:Z \
+		golang:1.22.2-alpine \
+		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
+.PHONY: lambda-zip-build
+
+layer-zip-clear:
+	rm -fr ./build
+
+layer-zip-prep:
+	mkdir -p ./build && \
+	cp ./scripts/build-zip/build-layer-zip.sh  ./build/ && \
+	cp clamd.conf ./build/ && \
+	chmod +x ./build/build-layer-zip.sh
+.PHONY: layer-zip-prep
+
+layer-zip-build: layer-zip-prep
+	docker run --rm \
+		--platform linux/amd64 \
+		-v `pwd`/build:/app:Z \
+		amazonlinux:2023.4.20240416.0 \
+		/bin/bash -c "cd /app && ./build-layer-zip.sh"
+.PHONY: layer-zip-build
+
+layer-zip-test-prep:
+	rm -fr ./build/test && \
+	rm -fr ./build/bin && \
+	rm -fr ./build/lib && \
+	rm -fr ./build/etc && \
+	mkdir -p ./build/test && \
+	cp ./scripts/build-zip/test-layer-zip.sh ./build/test/ && \
+	cp build/lambda_layer.zip ./build/test/ && \
+	chmod +x ./build/test/test-layer-zip.sh
+.PHONY: layer-zip-test-prep
+
+layer-zip-test: layer-zip-test-prep
+	docker run --rm \
+	--platform linux/amd64 \
+		-v `pwd`/build:/app:Z \
+		amazonlinux:2023.4.20240416.0 \
+		/bin/bash -c "cd /app && ./test/test-layer-zip.sh"
+.PHONY: layer-test
