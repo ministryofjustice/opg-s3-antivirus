@@ -40,7 +40,8 @@ jobs:
       files: test-results/test-coverage.txt
       fail_ci_if_error: true
       verbose: true
-    secrets: ${{ secrets.CODECOV_TOKEN }}
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
 
   code-test:
