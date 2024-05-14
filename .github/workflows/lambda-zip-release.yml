@@ -36,6 +36,20 @@ jobs:
           asset_path: release/myFunction.zip
           asset_name: myFunction-amd64.zip
           asset_content_type: application/zip
+      - name: Get Lambda artifact sha256
+        uses: actions/download-artifact@v4
+        with:
+          name: myFunction_sha256
+          path: release
+      - name: upload Lambda artifact sha256
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/myFunction.zip.sha256
+          asset_name: myFunction-amd64.zip.sha256
+          asset_content_type: application/zip
       - name: Get Lambda Layer artifact
         uses: actions/download-artifact@v4
         with:
@@ -49,4 +63,18 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: release/lambda_layer.zip
           asset_name: lambda_layer-amd64.zip
+          asset_content_type: application/zip
+      - name: Get Lambda Layer artifact sha256
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda_layer_sha256
+          path: release
+      - name: upload Lambda Layer artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/lambda_layer.zip.sha256
+          asset_name: lambda_layer-amd64.zip.sha256
           asset_content_type: application/zip

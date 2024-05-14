@@ -19,12 +19,12 @@ jobs:
         run: |
           sha256sum build/myFunction.zip > build/myFunction.zip.sha256
           echo "Lambda Function Zip SHA256 Hash: $(cat build/myFunction.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
-      - name: Archive code coverage results
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: myFunction
           path: build/myFunction.zip
-      - name: Archive code coverage results
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: myFunction_sha256
@@ -47,12 +47,12 @@ jobs:
         run: |
           sha256sum build/lambda_layer.zip > build/lambda_layer.zip.sha256
           echo "Lambda Layer Zip SHA256 Hash: $(cat build/lambda_layer.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
-      - name: Archive code coverage results
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: lambda_layer
           path: build/lambda_layer.zip
-      - name: Archive code coverage results
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: lambda_layer_sha256
