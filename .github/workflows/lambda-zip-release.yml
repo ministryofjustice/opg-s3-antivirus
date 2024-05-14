@@ -20,8 +20,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: ${{ input.tag }}
-          tag_name: ${{ input.tag }}
+          release_name: ${{ inputs.tag }}
+          tag_name: ${{ inputs.tag }}
           # body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
