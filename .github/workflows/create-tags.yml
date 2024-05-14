@@ -1,14 +1,14 @@
-name: Create Tags
+name: Create Tag
 
 on:
   workflow_call:
     outputs:
       tag:
         description: "Semver Tag"
-        value: ${{ steps.bump_version.outputs.tag }}
+        value: ${{ jobs.create_tag.outputs.tag }}
 
 jobs:
-  unit-test:
+  create_tag:
     runs-on: ubuntu-latest
     steps:
       - name: Extract branch name
