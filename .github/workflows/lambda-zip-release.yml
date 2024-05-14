@@ -20,7 +20,6 @@ jobs:
           prerelease: false
           release_name: ${{ inputs.tag }}
           tag_name: ${{ inputs.tag }}
-          # body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Get Lambda artifact
