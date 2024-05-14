@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/create-tags.yml
 
   build:
-    name: Build
+    name: Docker Image Build
     uses: ./.github/workflows/build.yml
 
   unit-test:
@@ -46,7 +46,7 @@ jobs:
       - unit-test
 
   docker-image-push:
-    name: "Scan & Push Containers"
+    name: Docker Scan & Push Containers
     if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/docker-push.yml
     needs: ['create-tag', 'build', 'unit-test', 'code-test', 'acceptance-test']
