@@ -27,11 +27,6 @@ jobs:
         with:
           name: myFunction
           path: release
-      - name: Get Lambda Layer artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: lambda_layer
-          path: release
       - name: upload Lambda artifact
         uses: actions/upload-release-asset@v1
         env:
@@ -41,6 +36,11 @@ jobs:
           asset_path: release/myFunction.zip
           asset_name: myFunction-amd64.zip
           asset_content_type: application/zip
+      - name: Get Lambda Layer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda_layer
+          path: release
       - name: upload Lambda Layer artifact
         uses: actions/upload-release-asset@v1
         env:

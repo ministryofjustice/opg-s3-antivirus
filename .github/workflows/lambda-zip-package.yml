@@ -27,7 +27,6 @@ jobs:
       - name: Cleanup
         run: |
           make lambda-zip-clear
-
   build-lambda-layer-zip:
     name: "Build Lambda Layer Zip"
     runs-on: ubuntu-latest
