@@ -68,7 +68,7 @@ jobs:
 
   push-tags:
     runs-on: ubuntu-latest
-    needs: push
+    needs: docker-image-push
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
