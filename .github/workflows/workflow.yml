@@ -3,12 +3,12 @@ name: Test & Build
 on:
   schedule:
     - cron: "00 10 * * 1"
-  # pull_request:
-  #   branches:
-  #     - main
-  # push:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 defaults:
@@ -35,29 +35,13 @@ jobs:
 
   unit-test:
     name: Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    uses: ./.github/workflows/unit-test.yml
+    with:
+      files: test-results/test-coverage.txt
+      fail_ci_if_error: true
+      verbose: true
+    secrets: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Cache Go Dependencies
-        uses: actions/cache@v4
-        with:
-          path: .gocache
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Run Unit Tests
-        run: make unit-test
-
-      - name: Upload Code Coverage
-        uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          files: test-results/test-coverage.txt
-          fail_ci_if_error: true
-          verbose: true
 
   code-test:
     name: Code Quality Tests

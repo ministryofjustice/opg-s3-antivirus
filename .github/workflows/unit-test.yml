@@ -1,0 +1,52 @@
+name: Unit Test
+
+on:
+  workflow_call:
+    inputs:
+      files:
+        description: 'The files to run unit tests on'
+        required: true
+        type: string
+      fail_ci_if_error:
+        description: 'Fail the CI if an error occurs'
+        required: true
+        type: string
+      verbose:
+        description: 'Verbose output'
+        required: true
+        type: string
+    secrets:
+      CODECOV_TOKEN:
+        description: 'Codecov Token'
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@v4
+        with:
+          path: .gocache
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run Unit Tests
+        run: make unit-test
+
+      - name: Upload Code Coverage
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: ${{ inputs.files }}
+          fail_ci_if_error: ${{ inputs.fail_ci_if_error }}
+          verbose: ${{ inputs.verbose }}
