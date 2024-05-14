@@ -2,3 +2,4 @@
 .gocache
 .trivy-cache
 test-results
+build
