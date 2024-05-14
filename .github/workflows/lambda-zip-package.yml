@@ -17,8 +17,8 @@ jobs:
         id: lambda-zip-build
       - name: generate zip hash
         run: |
-          sha256sum build/myFunction.zip > build/myFunction.zip.sha256
-          echo "Lambda Function Zip SHA256 Hash: $(cat build/myFunction.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
+          sha256sum build/myFunction.zip > build/myFunction.zip.sha256sum
+          echo "Lambda Function Zip SHA256 Hash: $(cat build/myFunction.zip.sha256sum)"  >> $GITHUB_STEP_SUMMARY
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -27,7 +27,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: myFunction_sha256
+          name: myFunction_sha256sum
           path: build/myFunction.zip.sha256sum
       - name: Cleanup
         run: |
@@ -45,8 +45,8 @@ jobs:
         id: layer-zip-build
       - name: generate zip hash
         run: |
-          sha256sum build/lambda_layer.zip > build/lambda_layer.zip.sha256
-          echo "Lambda Layer Zip SHA256 Hash: $(cat build/lambda_layer.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
+          sha256sum build/lambda_layer.zip > build/lambda_layer.zip.sha256sum
+          echo "Lambda Layer Zip SHA256 Hash: $(cat build/lambda_layer.zip.sha256sum)"  >> $GITHUB_STEP_SUMMARY
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,7 +55,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lambda_layer_sha256
+          name: lambda_layer_sha256sum
           path: build/lambda_layer.zip.sha256sum
       - name: Test layer
         run: |

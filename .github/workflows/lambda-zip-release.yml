@@ -39,7 +39,7 @@ jobs:
       - name: Get Lambda artifact sha256
         uses: actions/download-artifact@v4
         with:
-          name: myFunction_sha256
+          name: myFunction_sha256sum
           path: release
       - name: upload Lambda artifact sha256
         uses: actions/upload-release-asset@v1
@@ -67,7 +67,7 @@ jobs:
       - name: Get Lambda Layer artifact sha256
         uses: actions/download-artifact@v4
         with:
-          name: lambda_layer_sha256
+          name: lambda_layer_sha256sum
           path: release
       - name: upload Lambda Layer artifact
         uses: actions/upload-release-asset@v1
