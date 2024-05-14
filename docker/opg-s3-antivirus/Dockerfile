@@ -25,7 +25,7 @@ RUN yum update -y && \
     yum clean all
 
 
-COPY ./clamd.conf /opt/etc
+COPY ./clamd.conf /opt/etc/clamd.conf
 COPY --from=build-env /go/bin/main /var/task/main
 
 ENTRYPOINT [ "/var/task/main" ]
