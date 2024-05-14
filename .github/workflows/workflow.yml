@@ -1,0 +1,92 @@
+name: Test & Build
+
+on:
+  schedule:
+    - cron: "00 10 * * 1"
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  create-tag:
+    name: Create Tags
+    uses: ./.github/workflows/create-tags.yml
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Images
+        uses: actions/cache@v4
+        with:
+          path: /tmp/images
+          key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
+      - name: Build Images
+        run: |
+          make build
+          mkdir -p /tmp/images
+          docker save -o /tmp/images/s3-antivirus.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
+          docker save -o /tmp/images/s3-antivirus-update.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest
+
+  unit-test:
+    name: Unit Tests
+    uses: ./.github/workflows/unit-test.yml
+    with:
+      files: test-results/test-coverage.txt
+      fail_ci_if_error: true
+      verbose: true
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
+
+  code-test:
+    name: Code Quality Tests
+    uses: ./.github/workflows/code-test.yml
+
+  acceptance-test:
+    name: Acceptance Test
+    uses: ./.github/workflows/acceptance-test.yml
+    needs:
+      - build
+      - unit-test
+
+  docker-image-push:
+    name: "Scan & Push Containers"
+    if: github.actor != 'dependabot[bot]'
+    uses: ./.github/workflows/docker-push.yml
+    needs: ['create-tag', 'build', 'unit-test', 'code-test', 'acceptance-test']
+    with:
+      tag: ${{ needs.create-tag.outputs.tag }}
+
+  push-tags:
+    runs-on: ubuntu-latest
+    needs: docker-image-push
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::997462338508:role/sirius-actions-ci
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions
+
+      - name: Install AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+
+      - name: Push Tag to Parameter Store
+        run: |
+          aws ssm put-parameter --name "opg-s3-antivirus-latest-green-build" --type "String" --value "${{ needs.create-tags.outputs.tag }}" --overwrite --region=eu-west-1

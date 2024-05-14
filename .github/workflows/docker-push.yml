@@ -1,0 +1,86 @@
+name: Scan & Push Containers
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Semver Tag"
+        required: true
+        type: string
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.set-outputs.outputs.branch }}
+      tag: ${{ steps.bump_version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+
+      - uses: unfor19/install-aws-cli-action@v1
+
+      - name: Cache Images
+        uses: actions/cache@v4
+        with:
+          path: /tmp/images
+          key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
+
+      - name: Restore Image
+        run: |
+          docker load -i /tmp/images/s3-antivirus.tar
+          docker load -i /tmp/images/s3-antivirus-update.tar
+
+      - name: Trivy Image Vulnerability Scanner
+        run: make scan
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'test-results/trivy.sarif'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::311462405659:role/sirius-actions-ci
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions
+
+      - name: ECR Login
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: 311462405659
+
+      - name: Push Function Container
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: s3-antivirus
+        run: |
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{inputs.tag}}
+          if [ $BRANCH_NAME == "main" ]; then
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:main-${{inputs.tag}}
+            # We want all of the tags pushed
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          else
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{inputs.tag}}
+          fi
+
+      - name: Push Update Function Container
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: s3-antivirus-update
+        run: |
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{inputs.tag}}
+          if [ $BRANCH_NAME == "main" ]; then
+            # We want all of the tags pushed
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:main-${{inputs.tag}}
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+          else
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{inputs.tag}}
+          fi
