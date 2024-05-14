@@ -22,20 +22,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache Images
-        uses: actions/cache@v4
-        with:
-          path: /tmp/images
-          key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
-      - name: Build Images
-        run: |
-          make build
-          mkdir -p /tmp/images
-          docker save -o /tmp/images/s3-antivirus.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
-          docker save -o /tmp/images/s3-antivirus-update.tar 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest
+    uses: ./.github/workflows/build.yml
 
   unit-test:
     name: Unit Tests
