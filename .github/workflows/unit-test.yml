@@ -41,7 +41,7 @@ jobs:
       - name: Upload Code Coverage
         uses: codecov/codecov-action@v4
         env:
-          codecov_token: ${{ secrets.codecov_token }}
+          CODECOV_TOKEN: ${{ secrets.codecov_token }}
         with:
           files: ${{ inputs.files }}
           fail_ci_if_error: ${{ inputs.fail_ci_if_error }}
