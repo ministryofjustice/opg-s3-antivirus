@@ -11,8 +11,6 @@ on:
 jobs:
   release-zips:
     runs-on: ubuntu-latest
-    needs: [ push, build-lambda-zip, build-lambda-layer-zip]
-
     steps:
       - name: release
         uses: actions/create-release@v1
