@@ -15,6 +15,10 @@ jobs:
         run: |
           make lambda-zip-build
         id: lambda-zip-build
+      - name: generate zip hash
+        run: |
+          sha1sum build/myFunction.zip > build/myFunction.zip.sha1
+          echo "SHA1 Hash: $(cat build/myFunction.zip.sha1)"
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
@@ -35,6 +39,10 @@ jobs:
         run: |
           make layer-zip-build
         id: layer-zip-build
+      - name: generate zip hash
+        run: |
+          sha1sum build/lambda_layer.zip > build/lambda_layer.zip.sha1
+          echo "SHA1 Hash: $(cat build/lambda_layer.zip.sha1)"
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
