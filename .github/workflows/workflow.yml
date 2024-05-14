@@ -63,7 +63,7 @@ jobs:
 
   push-tags:
     name: Push Tags
-    needs: docker-image-push
+    needs: ['create-tag', 'docker-image-push']
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/tags-push.yml
     with:

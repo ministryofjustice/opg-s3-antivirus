@@ -45,7 +45,7 @@ down:
 
 lambda-zip-clear:
 	rm -fr ./build
-.PHONY: zip-clear
+.PHONY: lambda-zip-clear
 
 lambda-zip-prep:
 	mkdir -p ./build && \
@@ -53,15 +53,15 @@ lambda-zip-prep:
 	cp ./go.mod ./go.sum ./build
 	cp -R ./cmd/opg-s3-antivirus ./build/ && \
 	chmod +x ./build/build-lambda-zip.sh
-.PHONY: zip-prep
+.PHONY: lambda-zip-prep
 
-lambda-zip-build: zip-prep
+lambda-zip-build: lambda-zip-prep
 	docker run --rm \
 		--platform linux/amd64 \
 		-v `pwd`/build:/app:Z \
 		golang:1.22.2-alpine \
 		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
-.PHONY: zip-build
+.PHONY: lambda-zip-build
 
 layer-zip-clean:
 	rm -fr ./build
