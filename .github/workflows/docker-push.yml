@@ -1,4 +1,4 @@
-name: Push Containers
+name: Scan & Push Containers
 
 on:
   workflow_call:
@@ -11,7 +11,6 @@ on:
 jobs:
   push:
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
     outputs:
       branch: ${{ steps.set-outputs.outputs.branch }}
       tag: ${{ steps.bump_version.outputs.tag }}
