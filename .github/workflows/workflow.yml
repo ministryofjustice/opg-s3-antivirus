@@ -67,8 +67,6 @@ jobs:
     # if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/lambda-zip-release.yml
     needs: ['create-tag', 'zip-lambda-build']
-    with:
-      tag: ${{ needs.create-tag.outputs.tag }}
 
   # push-tags:
   #   name: Push Tags
