@@ -1,0 +1,56 @@
+name: Build Lambda Function and Layer Zips
+
+on:
+  workflow_call:
+
+jobs:
+  zip-lambda-build:
+    name: "Build Lambda Zip"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Lambda Package - Zip Build
+        run: |
+          make lambda-zip-build
+        id: lambda-zip-build
+      - name: generate zip hash
+        run: |
+          sha256sum build/myFunction.zip > build/myFunction.zip.sha256
+          echo "Lambda Function Zip SHA256 Hash: $(cat build/myFunction.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: myFunction
+          path: build/myFunction.zip
+      - name: Cleanup
+        run: |
+          make lambda-zip-clear
+
+  build-lambda-layer-zip:
+    name: "Build Lambda Layer Zip"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Layer Package - Zip Build
+        run: |
+          make layer-zip-build
+        id: layer-zip-build
+      - name: generate zip hash
+        run: |
+          sha256sum build/lambda_layer.zip > build/lambda_layer.zip.sha256
+          echo "Lambda Layer Zip SHA256 Hash: $(cat build/lambda_layer.zip.sha256)"  >> $GITHUB_STEP_SUMMARY
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda_layer
+          path: build/lambda_layer.zip
+      - name: Test layer
+        run: |
+          make layer-zip-test
+      - name: Cleanup
+        run: |
+          make layer-zip-clear
