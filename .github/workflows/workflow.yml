@@ -22,7 +22,7 @@ jobs:
 
   build:
     name: Docker Image Build
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/docker-build.yml
 
   unit-test:
     name: Unit Tests
