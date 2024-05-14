@@ -61,6 +61,12 @@ jobs:
     uses: ./.github/workflows/lambda-zip-package.yml
     needs: ['create-tag', 'unit-test', 'code-test']
 
+  zip-lambda-release:
+    name: Release Lambda Zips
+    # if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/lambda-zip-release.yml
+    needs: ['create-tag', 'zip-lambda-build']
+
   push-tags:
     name: Push Tags
     needs: ['create-tag', 'docker-image-push']
