@@ -63,7 +63,7 @@ lambda-zip-build: lambda-zip-prep
 		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
 .PHONY: lambda-zip-build
 
-layer-zip-clean:
+layer-zip-clear:
 	rm -fr ./build
 
 layer-zip-prep:
