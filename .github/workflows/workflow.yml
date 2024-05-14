@@ -1,0 +1,68 @@
+name: Test & Build
+
+on:
+  schedule:
+    - cron: "00 10 * * 1"
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  create-tag:
+    name: Create Tags
+    uses: ./.github/workflows/create-tags.yml
+
+  build:
+    name: Docker Image Build
+    uses: ./.github/workflows/docker-build.yml
+
+  unit-test:
+    name: Unit Tests
+    uses: ./.github/workflows/unit-test.yml
+    with:
+      files: test-results/test-coverage.txt
+      fail_ci_if_error: true
+      verbose: true
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
+
+  code-test:
+    name: Code Quality Tests
+    uses: ./.github/workflows/code-test.yml
+
+  acceptance-test:
+    name: Acceptance Test
+    uses: ./.github/workflows/acceptance-test.yml
+    needs:
+      - build
+      - unit-test
+
+  docker-image-push:
+    name: Docker Scan & Push Containers
+    if: github.actor != 'dependabot[bot]'
+    uses: ./.github/workflows/docker-push.yml
+    needs: ['create-tag', 'build', 'unit-test', 'code-test', 'acceptance-test']
+    with:
+      tag: ${{ needs.create-tag.outputs.tag }}
+    secrets:
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+
+  push-tags:
+    name: Push Tags
+    needs: docker-image-push
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/tags-push.yml
+    with:
+      tag: ${{ needs.create-tag.outputs.tag }}
+    secrets:
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
