@@ -24,12 +24,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Get Lambda artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: myFunction
           path: release
       - name: Get Lambda Layer artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: lambda_layer
           path: release
