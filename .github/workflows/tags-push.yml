@@ -1,0 +1,39 @@
+name: Push Tags
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Semver Tag"
+        required: true
+        type: string
+    secrets:
+      aws_access_key_id_actions:
+        description: 'AWS Access Key'
+        required: true
+      aws_secret_access_key_actions:
+        description: 'AWS Secret'
+        required: true
+
+jobs:
+  push-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
+          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::997462338508:role/sirius-actions-ci
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions
+      - name: Install AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+
+      - name: Push Tag to Parameter Store
+        run: |
+          aws ssm put-parameter --name "opg-s3-antivirus-latest-green-build" --type "String" --value "${{ inputs.tag }}" --overwrite --region=eu-west-1

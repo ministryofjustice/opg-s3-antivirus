@@ -70,26 +70,12 @@ jobs:
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
   push-tags:
-    runs-on: ubuntu-latest
+    name: Push Tags
     needs: docker-image-push
     if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-          aws-region: eu-west-1
-          role-to-assume: arn:aws:iam::997462338508:role/sirius-actions-ci
-          role-duration-seconds: 3600
-          role-session-name: GitHubActions
-
-      - name: Install AWS CLI
-        id: install-aws-cli
-        uses: unfor19/install-aws-cli-action@v1
-
-      - name: Push Tag to Parameter Store
-        run: |
-          aws ssm put-parameter --name "opg-s3-antivirus-latest-green-build" --type "String" --value "${{ needs.create-tags.outputs.tag }}" --overwrite --region=eu-west-1
+    uses: ./.github/workflows/tags-push.yml
+    with:
+      tag: ${{ needs.create-tag.outputs.tag }}
+    secrets:
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
