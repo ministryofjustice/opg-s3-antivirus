@@ -63,7 +63,7 @@ jobs:
 
   zip-lambda-release:
     name: Release Lambda Zips
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/lambda-zip-release.yml
     needs: ['create-tag', 'zip-lambda-build']
     with:
@@ -72,7 +72,7 @@ jobs:
   push-tags:
     name: Push Tags
     needs: ['create-tag', 'docker-image-push', 'zip-lambda-release']
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/tags-push.yml
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
