@@ -10,7 +10,7 @@ type ClamAvScanner struct {
 }
 
 func (s *ClamAvScanner) StartDaemon() (error) {
-	cmd := exec.Command("clamd", "--config-file", "/etc/clamd.conf")
+	cmd := exec.Command("clamd", "--config-file", "/opt/etc/clamd.conf")
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
@@ -23,7 +23,7 @@ func (s *ClamAvScanner) StartDaemon() (error) {
 }
 
 func (s *ClamAvScanner) ScanFile(path string) (bool, error) {
-	cmd := exec.Command("clamdscan", "--config-file", "/etc/clamd.conf", "--stdout", path)
+	cmd := exec.Command("clamdscan", "--config-file", "/opt/etc/clamd.conf", "--stdout", path)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
