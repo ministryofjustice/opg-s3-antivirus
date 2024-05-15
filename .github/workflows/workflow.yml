@@ -71,7 +71,7 @@ jobs:
 
   push-tags:
     name: Push Tags
-    needs: ['create-tag', 'docker-image-push']
+    needs: ['create-tag', 'docker-image-push', 'zip-lambda-release']
     # if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/tags-push.yml
     with:
