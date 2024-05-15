@@ -56,9 +56,22 @@ jobs:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
+  zip-lambda-build:
+    name: Package Lambda Function and Layer Zips
+    uses: ./.github/workflows/lambda-zip-package.yml
+    needs: ['create-tag', 'unit-test', 'code-test']
+
+  zip-lambda-release:
+    name: Release Lambda Zips
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/lambda-zip-release.yml
+    needs: ['create-tag', 'zip-lambda-build']
+    with:
+      tag: ${{ needs.create-tag.outputs.tag }}
+
   push-tags:
     name: Push Tags
-    needs: ['create-tag', 'docker-image-push']
+    needs: ['create-tag', 'docker-image-push', 'zip-lambda-release']
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/tags-push.yml
     with:
