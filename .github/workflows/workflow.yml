@@ -63,7 +63,6 @@ jobs:
 
   zip-lambda-release:
     name: Release Lambda Zips
-    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/lambda-zip-release.yml
     needs: ['create-tag', 'zip-lambda-build']
     with:
