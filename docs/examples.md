@@ -4,7 +4,7 @@ Here are some useful code snippets to help you get started with the S3 Antivirus
 
 ## Fetching a version tag of the Lambda Function Zip and Lambda Layer Package
 
-The workflow for this repositry writes a version tag to the SSM Parameter Store. This can be used to fetch the version of the Lambda Function Zip and Lambda Layer Package. The parameter is in the management account in the eu-west-1 region.
+The workflow for this repository writes a version tag to the SSM Parameter Store. This can be used to fetch the version of the Lambda Function Zip and Lambda Layer Package. The parameter is in the management account in the eu-west-1 region.
 
 ```shell
 key="/opg-s3-antivirus/zip-version-main"
