@@ -13,6 +13,10 @@ echo "Using $key: $value"
 
 ```
 
+When working locally you can use the script in [./example-scripts/pull-av-scan-zip-package-version.sh](./example-scripts/pull-av-scan-zip-packages.sh) to fetch the version tag using something like envrc.
+
+```shell
+
 ## Fetching a version of the Lambda Function Zip and Lambda Layer Package
 
 ```shell
