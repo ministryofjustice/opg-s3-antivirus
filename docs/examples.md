@@ -65,3 +65,47 @@ resource "aws_lambda_function" "zip_lambda_function" {
   provider = aws.region
 }
 ```
+
+## Deploying the image to AWS Lambda with Terraform
+
+```hcl
+data "aws_ecr_repository" "s3_antivirus" {
+  name     = "s3-antivirus"
+  provider = aws.management
+}
+
+data "aws_ecr_image" "s3_antivirus" {
+  repository_name = data.aws_ecr_repository.s3_antivirus.name
+  image_tag       = "latest"
+  provider        = aws.management
+}
+
+resource "aws_lambda_function" "lambda_function" {
+  function_name = "s3-antivirus"
+  description   = "Function to scan S3 objects for viruses"
+  image_uri     = "${data.aws_ecr_repository.s3_antivirus.repository_url}@${data.aws_ecr_image.s3_antivirus.image_digest}"
+  package_type  = "Image"
+  role          = var.lambda_task_role.arn
+  timeout       = 300
+  memory_size   = 4096
+  publish       = true
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  logging_config {
+    log_group  = var.aws_cloudwatch_log_group.name
+    log_format = "JSON"
+  }
+
+  dynamic "environment" {
+    for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
+    content {
+      variables = var.environment_variables
+    }
+  }
+  provider = aws.region
+}
+
+```
