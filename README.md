@@ -2,6 +2,8 @@
 
 opg-s3-antivirus is a lambda function that scans files uploaded to an S3 bucket for viruses. It uses the ClamAV antivirus engine to scan files.
 
+Once scanned, the function adds a tag `virus-scan-status` to the object in S3 with the result of the scan, eith `ok` or `infected`.
+
 ## Antivirus Scan Function
 
 You can find examples of how to use the scan lambda function in [docs/examples.md](docs/examples.md).
