@@ -4,7 +4,7 @@ opg-s3-antivirus is a lambda function that scans files uploaded to an S3 bucket 
 
 The lambda function is triggered by put object events in the S3 bucket.
 
-Once scanned, the function adds a tag `virus-scan-status` to the object in S3 with the result of the scan, eith `ok` or `infected`.
+Once scanned, the function adds a tag `virus-scan-status` to the object in S3 with the result of the scan, either `ok` or `infected`.
 
 ## Antivirus Scan Function
 

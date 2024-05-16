@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Bash script to pull S3 Antivirus Scan Zip Packages for Lambda
-# Ensures that tfswitch, jq, versions.tf are present before running
-#
+# Ensures that aws-vault and a profile for management that allows
+# ssm get-parameter are present before running.
 
 set -e
 
