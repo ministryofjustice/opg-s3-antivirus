@@ -4,7 +4,7 @@ opg-s3-antivirus is a lambda function that scans files uploaded to an S3 bucket 
 
 ## Antivirus Scan Function
 
-You can find examples of how to use the scan lambda functino in [docs/examples.md](docs/examples.md).
+You can find examples of how to use the scan lambda function in [docs/examples.md](docs/examples.md).
 
 The zip version of the scan lamdba function and it's layer are base on the al2023 runtime, and the x86_64 architecture.
 
