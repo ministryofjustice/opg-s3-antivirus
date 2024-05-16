@@ -17,7 +17,7 @@ jobs:
         id: create_release
         with:
           draft: false
-          prerelease: true
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
           release_name: ${{ inputs.tag }}
           tag_name: ${{ inputs.tag }}
         env:
