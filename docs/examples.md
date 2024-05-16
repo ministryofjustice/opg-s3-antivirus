@@ -2,17 +2,26 @@
 
 Here are some useful code snippets to help you get started with the S3 Antivirus Scanner Lambda Function.
 
+## Fetching a version tag of the Lambda Function Zip and Lambda Layer Package
+
+The workflow for this repositry writes a version tag to the SSM Parameter Store. This can be used to fetch the version of the Lambda Function Zip and Lambda Layer Package. The parameter is in the management account in the eu-west-1 region.
+
+```shell
+key="/opg-s3-antivirus/zip-version-main"
+value=$(aws ssm get-parameter --name "$key" --query 'Parameter.Value' --output text 2>/dev/null || true)
+echo "Using $key: $value"
+
+```
+
 ## Fetching a version of the Lambda Function Zip and Lambda Layer Package
 
 ```shell
-
 wget -O myFunction.zip https://github.com/ministryofjustice/opg-s3-antivirus/releases/download/v0.594.0/myFunction-amd64.zip
 wget -O myFunction.zip.sha256sum https://github.com/ministryofjustice/opg-s3-antivirus/releases/download/v0.594.0/myFunction-amd64.zip.sha256sum
 sha256sum -c "myFunction.zip.sha256sum"
 wget -O lambda_layer.zip https://github.com/ministryofjustice/opg-s3-antivirus/releases/download/v0.594.0/lambda_layer-amd64.zip
 wget -O lambda_layer.zip.sha256sum https://github.com/ministryofjustice/opg-s3-antivirus/releases/download/v0.594.0/lambda_layer-amd64.zip.sha256sum
 sha256sum -c "lambda_layer.zip.sha256sum"
-
 ```
 
 ## Deploying the zip package to AWS Lambda with Terraform
