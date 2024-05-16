@@ -15,7 +15,7 @@ sha256sum -c "lambda_layer.zip.sha256sum"
 
 ```
 
-## Deploying a zip package to AWS Lambda
+## Deploying the zip package to AWS Lambda with Terraform
 
 ```hcl
 resource "aws_lambda_layer_version" "lambda_layer" {

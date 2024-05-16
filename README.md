@@ -4,4 +4,4 @@ Development repository: Managed by opg-org-infra &amp; Terraform
 
 
 
-zip package is based on al2023.
+zip package is based on al2023. it's x86_64 compatible.
