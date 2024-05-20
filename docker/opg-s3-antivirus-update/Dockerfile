@@ -17,6 +17,7 @@ RUN apk update && apk add --no-cache clamav
 
 RUN apk update && \
     apk upgrade \
+    busybox \
     libcrypto3 \
     libcurl \
     libssl3 \
