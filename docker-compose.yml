@@ -33,7 +33,7 @@ services:
 
   localstack:
     image: localstack/localstack:3.4
-    depends_on: [s3-antivirus, s3-antivirus-update]
+    depends_on: [ s3-antivirus, s3-antivirus-update ]
     volumes:
       - "./scripts/localstack/init:/etc/localstack/init/ready.d"
       - "./scripts/localstack/wait:/scripts/wait"
@@ -42,7 +42,7 @@ services:
     environment:
       AWS_DEFAULT_REGION: eu-west-1
     healthcheck:
-      test: ["CMD-SHELL", "curl http://localhost:4566 || exit 1"]
+      test: [ "CMD-SHELL", "curl http://localhost:4566 || exit 1" ]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -79,3 +79,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./.trivy-cache:/root/.cache
       - ./test-results:/test-results
+      - ./.trivyignore:/.trivyignore

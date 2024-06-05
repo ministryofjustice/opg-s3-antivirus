@@ -1,4 +1,4 @@
-FROM golang:1.22.3 AS build-env
+FROM golang:1.22-alpine AS build-env
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ FROM public.ecr.aws/lambda/provided:al2
 
 ENV PATH="${PATH}:/usr/sbin"
 
-RUN yum update -y && yum install -y clamav-0.103.9-1.amzn2.0.2 clamd-0.103.9-1.amzn2.0.2 && yum clean all
+RUN yum update -y && yum install -y clamav-0.103.11-1.amzn2.0.1 clamd-0.103.11-1.amzn2.0.1 && yum clean all
 
 RUN yum update -y && \
     yum upgrade -y \
