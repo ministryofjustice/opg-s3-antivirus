@@ -30,8 +30,7 @@
     "labels": [
       "Dependencies",
       "Renovate"
-    ],
-    "prPriority": 0
+    ]
   },
   "vulnerabilityAlerts": {
     "groupName": "Vulnerability Patches",
@@ -40,7 +39,6 @@
     "rangeStrategy": "update-lockfile",
     "commitMessagePrefix": "[SECURITY]",
     "branchTopic": "{{{datasource}}}-{{{depName}}}-vulnerability",
-    "prCreation": "immediate",
-    "prPriority": 2
+    "prCreation": "immediate"
   }
 }
