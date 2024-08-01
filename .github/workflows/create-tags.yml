@@ -24,7 +24,7 @@ jobs:
         id: extract_branch
       - name: Bump version
         id: bump_version
-        uses: anothrNick/github-tag-action@1.69.0
+        uses: anothrNick/github-tag-action@1.70.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: minor
