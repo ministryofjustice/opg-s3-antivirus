@@ -57,7 +57,7 @@ services:
     command: golangci-lint run -v --timeout 5m
 
   go-sec:
-    image: securego/gosec
+    image: securego/gosec:2.20.0
     working_dir: /app
     volumes:
       - .:/app
