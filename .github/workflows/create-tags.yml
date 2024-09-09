@@ -8,7 +8,7 @@ on:
         value: ${{ jobs.create_tag.outputs.tag }}
       timestamp:
         description: "timestamp"
-        value: ${{ jobs.create_tag.outputs.tag }}
+        value: ${{ jobs.create_tag.outputs.timestamp }}
 
 jobs:
   create_tag:
