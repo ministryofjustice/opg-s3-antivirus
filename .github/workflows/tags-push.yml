@@ -7,6 +7,10 @@ on:
         description: "Semver Tag"
         required: true
         type: string
+      timestamp:
+        description: "timestamp"
+        required: true
+        type: string
     secrets:
       aws_access_key_id_actions:
         description: 'AWS Access Key'
@@ -50,4 +54,4 @@ jobs:
 
       - name: Push Tag to Parameter Store
         run: |
-          aws ssm put-parameter --name "/opg-s3-antivirus/zip-version-main" --type "String" --value "${{ inputs.tag }}" --overwrite --region=eu-west-1
+          aws ssm put-parameter --name "/opg-s3-antivirus/zip-version-main" --type "String" --value "${{ inputs.tag }}-${{ inputs.timestamp }}" --overwrite --region=eu-west-1

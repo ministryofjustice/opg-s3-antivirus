@@ -7,6 +7,10 @@ on:
         description: "Semver Tag"
         required: true
         type: string
+      timestamp:
+        description: "timestamp"
+        required: false
+        type: string
     secrets:
       aws_access_key_id_actions:
         description: 'AWS Access Key'
@@ -69,14 +73,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: s3-antivirus
         run: |
-          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{inputs.tag}}
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{ inputs.tag }}
           if ${{ github.ref == 'refs/heads/main' }} ; then
             printf "Pushing main branch to ECR\n"
-            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:main-${{inputs.tag}}
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:main-${{ inputs.tag }}
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:main-${{ inputs.tag }}-${{ inputs.timestamp }}
             # We want all of the tags pushed
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
           else
-            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{inputs.tag}}
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:${{ inputs.tag }}
           fi
 
       - name: Push Update Function Container
@@ -84,12 +89,13 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: s3-antivirus-update
         run: |
-          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{inputs.tag}}
+          docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{ inputs.tag }}
           if ${{ github.ref == 'refs/heads/main' }}; then
             printf "Pushing main branch to ECR\n"
             # We want all of the tags pushed
-            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:main-${{inputs.tag}}
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:main-${{ inputs.tag }}
+            docker tag 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:main-${{ inputs.tag }}-${{ inputs.timestamp }}
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
           else
-            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{inputs.tag}}
+            docker push 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:${{ inputs.tag }}
           fi
