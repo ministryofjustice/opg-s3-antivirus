@@ -12,14 +12,17 @@ jobs:
   release-zips:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +"%Y%m%d%H%M%S")" >> "$GITHUB_OUTPUT"
       - name: release
         uses: actions/create-release@v1
         id: create_release
         with:
           draft: ${{ github.ref != 'refs/heads/main' }}
           prerelease: ${{ github.ref != 'refs/heads/main' }}
-          release_name: ${{ inputs.tag }}
-          tag_name: ${{ inputs.tag }}
+          release_name: ${{ inputs.tag }}-${{ steps.timestamp.outputs.timestamp }}
+          tag_name: ${{ inputs.tag }}-${{ steps.timestamp.outputs.timestamp }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
