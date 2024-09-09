@@ -7,6 +7,10 @@ on:
         description: "Semver Tag"
         required: true
         type: string
+      Timestamp:
+        description: "timestamp"
+        required: true
+        type: string
 
 jobs:
   release-zips:
@@ -21,8 +25,8 @@ jobs:
         with:
           draft: ${{ github.ref != 'refs/heads/main' }}
           prerelease: ${{ github.ref != 'refs/heads/main' }}
-          release_name: ${{ inputs.tag }}-${{ steps.timestamp.outputs.timestamp }}
-          tag_name: ${{ inputs.tag }}-${{ steps.timestamp.outputs.timestamp }}
+          release_name: ${{ inputs.tag }}-${{ input.timestamp }}
+          tag_name: ${{ inputs.tag }}-${{ input.timestamp }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 

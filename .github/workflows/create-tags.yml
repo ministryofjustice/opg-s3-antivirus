@@ -6,6 +6,9 @@ on:
       tag:
         description: "Semver Tag"
         value: ${{ jobs.create_tag.outputs.tag }}
+      timestamp:
+        description: "timestamp"
+        value: ${{ jobs.create_tag.outputs.tag }}
 
 jobs:
   create_tag:
@@ -35,5 +38,9 @@ jobs:
       - name: Post tag to summary
         run: |
           echo "Tag: ${{ steps.bump_version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+      - name: Set Timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +"%Y%m%d%H%M%S")" >> "$GITHUB_OUTPUT"
     outputs:
       tag: ${{ steps.bump_version.outputs.tag }}
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
