@@ -52,6 +52,7 @@ jobs:
     needs: ['create-tag', 'build', 'unit-test', 'code-test', 'acceptance-test']
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
+      timestamp: ${{ needs.create-tag.outputs.timestamp }}
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
@@ -68,6 +69,7 @@ jobs:
     needs: ['create-tag', 'zip-lambda-build']
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
+      timestamp: ${{ needs.create-tag.outputs.timestamp }}
 
   push-tags:
     name: Push Tags
@@ -76,6 +78,7 @@ jobs:
     uses: ./.github/workflows/tags-push.yml
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
+      timestamp: ${{ needs.create-tag.outputs.timestamp }}
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
