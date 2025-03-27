@@ -34,7 +34,7 @@ type Lambda struct {
 }
 
 func (l *Lambda) downloadDefinitions() error {
-	if err := os.Mkdir(l.definitionDir, 0755); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(l.definitionDir, 0750); err != nil && !os.IsExist(err) {
 		return err
 	}
 
@@ -55,11 +55,17 @@ func (l *Lambda) downloadDefinitions() error {
 			return err
 		}
 
-		file, err := os.Create(filepath.Join(l.definitionDir, key))
+		file, err := os.Create(filepath.Join(l.definitionDir, key)) //nolint:gosec // variables are fixed so inclusion is not risky
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+
+		defer func() {
+			err := file.Close()
+			if err != nil {
+				log.Printf("error whilst closing file: %s", err.Error())
+			}
+		}()
 
 		if _, err := file.Write(buf.Bytes()); err != nil {
 			return err
@@ -71,7 +77,7 @@ func (l *Lambda) downloadDefinitions() error {
 
 func (l *Lambda) uploadDefinitions() error {
 	for _, key := range l.definitionFiles {
-		file, err := os.Open(filepath.Join(l.definitionDir, key))
+		file, err := os.Open(filepath.Join(l.definitionDir, key)) //nolint:gosec // variables are fixed so inclusion is not risky
 		if err != nil {
 			return err
 		}
