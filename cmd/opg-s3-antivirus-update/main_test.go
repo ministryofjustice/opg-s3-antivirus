@@ -50,7 +50,7 @@ func TestHandleEvent(t *testing.T) {
 	if !assert.Nil(err) {
 		return
 	}
-	defer os.RemoveAll(tempdir)
+	defer os.RemoveAll(tempdir) //nolint:errcheck // no need to check OS error in this test
 
 	downloader := &mockDownloader{}
 	uploader := &mockUploader{}
@@ -116,14 +116,15 @@ func TestHandleEventFirstRun(t *testing.T) {
 	if !assert.Nil(err) {
 		return
 	}
-	defer os.RemoveAll(tempdir)
+	defer os.RemoveAll(tempdir) //nolint:errcheck // no need to check OS error in this test
 
 	for _, name := range []string{"a", "b"} {
-		file, err := os.Create(filepath.Join(tempdir, name))
+		file, err := os.Create(filepath.Join(tempdir, name)) //nolint:gosec // tempdir is a constrained variable
 		if !assert.Nil(err) {
 			return
 		}
-		file.Close()
+		err = file.Close()
+		assert.Nil(err)
 	}
 
 	downloader := &mockDownloader{}

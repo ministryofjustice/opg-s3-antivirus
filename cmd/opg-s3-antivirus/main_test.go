@@ -305,7 +305,7 @@ func TestDownloadDefinitions(t *testing.T) {
 	if !assert.Nil(err) {
 		return
 	}
-	defer os.RemoveAll(tempdir)
+	defer os.RemoveAll(tempdir) //nolint:errcheck // no need to check OS error in this test
 
 	downloader := &mockDownloader{}
 
@@ -332,10 +332,10 @@ func TestDownloadDefinitions(t *testing.T) {
 	err = l.downloadDefinitions(tempdir, "a-bucket", []string{"a", "b"})
 	assert.Nil(err)
 
-	fileA, _ := os.ReadFile(filepath.Join(tempdir, "a"))
+	fileA, _ := os.ReadFile(filepath.Join(tempdir, "a")) //nolint:gosec // tempdir is a constrained variable
 	assert.Equal([]byte("hello"), fileA)
 
-	fileB, _ := os.ReadFile(filepath.Join(tempdir, "b"))
+	fileB, _ := os.ReadFile(filepath.Join(tempdir, "b")) //nolint:gosec // tempdir is a constrained variable
 	assert.Equal([]byte("there"), fileB)
 
 	mock.AssertExpectationsForObjects(t, downloader)
@@ -348,7 +348,7 @@ func TestDownloadDefinitionsWhenError(t *testing.T) {
 	if !assert.Nil(err) {
 		return
 	}
-	defer os.RemoveAll(tempdir)
+	defer os.RemoveAll(tempdir) //nolint:errcheck // no need to check OS error in this test
 
 	expectedErr := errors.New("what")
 
