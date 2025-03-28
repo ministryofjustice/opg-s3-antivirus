@@ -58,7 +58,7 @@ type Lambda struct {
 }
 
 func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
-	if err := os.Mkdir(dir, 0755); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) {
 		return err
 	}
 
@@ -73,11 +73,11 @@ func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
 			return err
 		}
 
-		file, err := os.Create(filepath.Join(dir, key))
+		file, err := os.Create(filepath.Join(dir, key)) //nolint:gosec // variables are fixed so inclusion is not risky
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer file.Close() //nolint:errcheck // no need to check error when closing file
 
 		if _, err := file.Write(buf.Bytes()); err != nil {
 			return err
@@ -154,8 +154,20 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	if err != nil {
 		return MyResponse{}, fmt.Errorf("failed to create file: %w", err)
 	}
-	defer os.Remove(f.Name())
-	defer f.Close()
+
+	defer func() {
+		err := os.Remove(f.Name())
+		if err != nil {
+			log.Printf("error whilst removing file: %s", err.Error())
+		}
+	}()
+
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.Printf("error whilst closing file: %s", err.Error())
+		}
+	}()
 
 	if err := l.downloadFile(f, bucketName, objectKey); err != nil {
 		log.Print(err)

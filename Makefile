@@ -1,4 +1,4 @@
-all: lint go-sec unit-test build scan acceptance-test down
+all: lint unit-test build scan acceptance-test down
 
 test-results:
 	mkdir -p -m 0777 .cache test-results .gocache cypress/screenshots .trivy-cache
@@ -6,13 +6,10 @@ test-results:
 setup-directories: test-results
 
 lint: setup-directories
-	docker compose run go-lint
-
-go-sec: setup-directories
-	docker compose run go-sec
+	docker compose run --rm go-lint
 
 unit-test: setup-directories
-	docker compose run test-runner
+	docker compose run --rm test-runner
 
 build:
 	docker compose build --parallel s3-antivirus s3-antivirus-update
