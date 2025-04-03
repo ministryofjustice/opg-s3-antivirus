@@ -20,7 +20,7 @@ jobs:
         id: timestamp
         run: echo "timestamp=$(date +"%Y%m%d%H%M%S")" >> "$GITHUB_OUTPUT"
       - name: release
-        uses: actions/create-release@v1.1.4
+        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1.1.4
         id: create_release
         with:
           draft: ${{ github.ref != 'refs/heads/main' }}
@@ -31,13 +31,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Get Lambda artifact
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: myFunction
           path: release
 
       - name: upload Lambda artifact
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -47,13 +47,13 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda artifact sha256
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: myFunction_sha256sum
           path: release
 
       - name: upload Lambda artifact sha256
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -63,13 +63,13 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda Layer artifact
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: lambda_layer
           path: release
 
       - name: upload Lambda Layer artifact
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -79,13 +79,13 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda Layer artifact sha256
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: lambda_layer_sha256sum
           path: release
 
       - name: upload Lambda Layer artifact
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
