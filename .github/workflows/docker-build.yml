@@ -7,9 +7,9 @@ jobs:
   docker-image-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Cache Images
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: /tmp/images
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
