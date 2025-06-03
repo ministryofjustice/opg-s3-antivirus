@@ -10,6 +10,7 @@ buckets=""
 awslocal lambda list-functions
 awslocal lambda wait function-active-v2 --region eu-west-1 --function-name s3-antivirus
 awslocal lambda wait function-active-v2 --region eu-west-1 --function-name s3-antivirus-update
+awslocal lambda list-functions
 
 while [[ "$iterations" -lt 60 ]]
 do
