@@ -7,8 +7,8 @@ iterations=0
 
 buckets=""
 
-awslocal lambda wait function-active-v2 --function-name s3-antivirus
-awslocal lambda wait function-active-v2 --function-name s3-antivirus-update
+awslocal lambda wait function-active-v2 --region eu-west-1 --function-name s3-antivirus
+awslocal lambda wait function-active-v2 --region eu-west-1 --function-name s3-antivirus-update
 
 while [[ "$iterations" -lt 60 ]]
 do
