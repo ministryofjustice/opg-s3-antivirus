@@ -16,5 +16,6 @@ jobs:
       - name: Restore images
         run: |
           docker load -i /tmp/images/s3-antivirus.tar
+          docker load -i /tmp/images/s3-antivirus-update.tar
       - name: Run Acceptance Tests
         run: make acceptance-test
