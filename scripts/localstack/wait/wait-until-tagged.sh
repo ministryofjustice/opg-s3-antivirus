@@ -9,7 +9,7 @@ buckets=""
 
 while [[ "$iterations" -lt 120 ]]
 do
-  tags=$(awslocal s3api get-object-tagging --bucket uploads-bucket --key $1 2> /dev/null) || true
+  tags=$(awslocal s3api get-object-tagging --region eu-west-1 --bucket uploads-bucket --key $1 2> /dev/null) || true
 
   if [[ $tags = *virus-scan-status* ]]
   then
