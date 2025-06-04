@@ -17,30 +17,18 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: '0'
-      - name: Extract branch name
-        run: |
-          if [ "${{ github.head_ref }}" == "" ]; then
-            echo BRANCH_NAME=main >> $GITHUB_ENV
-          else
-            echo BRANCH_NAME=${{ github.head_ref }} >> $GITHUB_ENV
-          fi
-        id: extract_branch
-      - name: Bump version
-        id: bump_version
-        uses: anothrNick/github-tag-action@e528bc2b9628971ce0e6f823f3052d1dcd9d512c # 1.73.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
-          PRERELEASE: true
-          PRERELEASE_SUFFIX: ${{ env.BRANCH_NAME }}
-          RELEASE_BRANCHES: main
-          WITH_V: true
+      - name: "Generate semver tag and release"
+        id: semver_tag
+        uses: ministryofjustice/opg-github-actions/.github/actions/semver-tag@v3.1.4
+        with:
+          releases_enabled: false
+          with_v: true
       - name: Post tag to summary
         run: |
-          echo "Tag: ${{ steps.bump_version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "Tag: ${{ steps.semver_tag.outputs.created_tag }}" >> $GITHUB_STEP_SUMMARY
       - name: Set Timestamp
         id: timestamp
         run: echo "timestamp=$(date +"%Y%m%d%H%M%S")" >> "$GITHUB_OUTPUT"
     outputs:
-      tag: ${{ steps.bump_version.outputs.tag }}
+      tag: ${{ steps.semver_tag.outputs.created_tag }}
       timestamp: ${{ steps.timestamp.outputs.timestamp }}
