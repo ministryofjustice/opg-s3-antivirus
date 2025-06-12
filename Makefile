@@ -11,6 +11,7 @@ lint: setup-directories
 unit-test: setup-directories
 	docker compose run --rm test-runner
 
+.PHONY: build
 build:
 	docker compose build --parallel s3-antivirus s3-antivirus-update
 
