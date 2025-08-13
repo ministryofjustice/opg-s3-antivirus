@@ -1,36 +1,36 @@
 package main
 
 import (
-	"errors"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 type mockDownloader struct {
-	*s3manager.Downloader
+	Downloader
 	mock.Mock
 }
 
-func (m *mockDownloader) Download(w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (int64, error) {
+func (m *mockDownloader) Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error) {
 	args := m.Called(w, *input.Bucket, *input.Key)
 	return 0, args.Error(0)
 }
 
 type mockUploader struct {
-	*s3manager.Uploader
+	Uploader
 	mock.Mock
 }
 
-func (m *mockUploader) Upload(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
-	args := m.Called(*input.Bucket, *input.Key, input.Body, *input.ServerSideEncryption)
+func (m *mockUploader) Upload(ctx context.Context, input *s3.PutObjectInput, opts ...func(*manager.Uploader)) (*manager.UploadOutput, error) {
+	args := m.Called(*input.Bucket, *input.Key, input.Body, types.ServerSideEncryptionAes256)
 	return nil, args.Error(0)
 }
 
@@ -85,7 +85,7 @@ func TestHandleEvent(t *testing.T) {
 		On("Update").Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "a", mock.Anything, "AES256").
+		On("Upload", "a-bucket", "a", mock.Anything, types.ServerSideEncryptionAes256).
 		Run(func(args mock.Arguments) {
 			r := args[2].(io.Reader)
 			data, _ := io.ReadAll(r)
@@ -94,7 +94,7 @@ func TestHandleEvent(t *testing.T) {
 		Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "b", mock.Anything, "AES256").
+		On("Upload", "a-bucket", "b", mock.Anything, types.ServerSideEncryptionAes256).
 		Run(func(args mock.Arguments) {
 			r := args[2].(io.Reader)
 			data, _ := io.ReadAll(r)
@@ -102,7 +102,7 @@ func TestHandleEvent(t *testing.T) {
 		}).
 		Return(nil)
 
-	response, err := l.HandleEvent(Event{})
+	response, err := l.HandleEvent(context.Background(), Event{})
 	assert.Nil(err)
 	assert.Equal(Response{Message: "clamav definitions updated"}, response)
 
@@ -142,20 +142,20 @@ func TestHandleEventFirstRun(t *testing.T) {
 
 	downloader.
 		On("Download", mock.Anything, "a-bucket", "a").
-		Return(awserr.New(s3.ErrCodeNoSuchKey, "", errors.New("")))
+		Return(&types.NoSuchKey{})
 
 	freshclam.
 		On("Update").Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "a", mock.Anything, "AES256").
+		On("Upload", "a-bucket", "a", mock.Anything, types.ServerSideEncryptionAes256).
 		Return(nil)
 
 	uploader.
-		On("Upload", "a-bucket", "b", mock.Anything, "AES256").
+		On("Upload", "a-bucket", "b", mock.Anything, types.ServerSideEncryptionAes256).
 		Return(nil)
 
-	response, err := l.HandleEvent(Event{})
+	response, err := l.HandleEvent(context.Background(), Event{})
 	assert.Nil(err)
 	assert.Equal(Response{Message: "clamav definitions updated"}, response)
 
