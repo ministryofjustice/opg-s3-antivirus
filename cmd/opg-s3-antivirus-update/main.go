@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 )
 
 type Updater interface {
@@ -24,16 +26,24 @@ type Response struct {
 	Message string `json:"message"`
 }
 
+type Downloader interface {
+	Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error)
+}
+
+type Uploader interface {
+	Upload(ctx context.Context, input *s3.PutObjectInput, opts ...func(*manager.Uploader)) (*manager.UploadOutput, error)
+}
+
 type Lambda struct {
 	bucket          string
 	definitionDir   string
 	definitionFiles []string
-	downloader      s3manageriface.DownloaderAPI
-	uploader        s3manageriface.UploaderAPI
+	downloader      Downloader
+	uploader        Uploader
 	freshclam       Updater
 }
 
-func (l *Lambda) downloadDefinitions() error {
+func (l *Lambda) downloadDefinitions(ctx context.Context) error {
 	if err := os.Mkdir(l.definitionDir, 0750); err != nil && !os.IsExist(err) {
 		return err
 	}
@@ -44,13 +54,11 @@ func (l *Lambda) downloadDefinitions() error {
 			Key:    aws.String(key),
 		}
 
-		var buf aws.WriteAtBuffer
-		if _, err := l.downloader.Download(&buf, input); err != nil {
-			if aerr, ok := err.(awserr.Error); ok {
-				switch aerr.Code() {
-				case s3.ErrCodeNoSuchKey:
-					return nil
-				}
+		w := manager.NewWriteAtBuffer([]byte{})
+		if _, err := l.downloader.Download(ctx, w, input); err != nil {
+			var nske *types.NoSuchKey
+			if errors.As(err, &nske) {
+				return nil
 			}
 			return err
 		}
@@ -67,7 +75,7 @@ func (l *Lambda) downloadDefinitions() error {
 			}
 		}()
 
-		if _, err := file.Write(buf.Bytes()); err != nil {
+		if _, err := file.Write(w.Bytes()); err != nil {
 			return err
 		}
 	}
@@ -75,21 +83,21 @@ func (l *Lambda) downloadDefinitions() error {
 	return nil
 }
 
-func (l *Lambda) uploadDefinitions() error {
+func (l *Lambda) uploadDefinitions(ctx context.Context) error {
 	for _, key := range l.definitionFiles {
 		file, err := os.Open(filepath.Join(l.definitionDir, key)) //nolint:gosec // variables are fixed so inclusion is not risky
 		if err != nil {
 			return err
 		}
 
-		input := &s3manager.UploadInput{
+		input := &s3.PutObjectInput{
 			Bucket:               aws.String(l.bucket),
 			Key:                  aws.String(key),
 			Body:                 file,
-			ServerSideEncryption: aws.String("AES256"),
+			ServerSideEncryption: types.ServerSideEncryptionAes256,
 		}
 
-		if _, err := l.uploader.Upload(input); err != nil {
+		if _, err := l.uploader.Upload(ctx, input); err != nil {
 			return err
 		}
 	}
@@ -97,9 +105,9 @@ func (l *Lambda) uploadDefinitions() error {
 	return nil
 }
 
-func (l *Lambda) HandleEvent(event Event) (Response, error) {
+func (l *Lambda) HandleEvent(ctx context.Context, event Event) (Response, error) {
 	log.Print("downloading previous definitions")
-	if err := l.downloadDefinitions(); err != nil {
+	if err := l.downloadDefinitions(ctx); err != nil {
 		log.Printf("download definitions: %v", err)
 		return Response{}, err
 	}
@@ -111,7 +119,7 @@ func (l *Lambda) HandleEvent(event Event) (Response, error) {
 	}
 
 	log.Print("uploading previous definitions")
-	if err := l.uploadDefinitions(); err != nil {
+	if err := l.uploadDefinitions(ctx); err != nil {
 		log.Printf("upload definitions: %v", err)
 		return Response{}, err
 	}
@@ -121,20 +129,33 @@ func (l *Lambda) HandleEvent(event Event) (Response, error) {
 }
 
 func main() {
-	sess := session.Must(session.NewSession())
+	ctx := context.Background()
 
-	endpoint := os.Getenv("AWS_S3_ENDPOINT")
-	sess.Config.Endpoint = &endpoint
-	sess.Config.S3ForcePathStyle = aws.Bool(true)
+	awsRegion := os.Getenv("AWS_REGION")
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(awsRegion),
+	)
+	if err != nil {
+		log.Printf("error building aws config: %v", err)
+	}
+
+	if endpoint, ok := os.LookupEnv("AWS_S3_ENDPOINT"); ok {
+		cfg.BaseEndpoint = &endpoint
+	}
+
+	s3Client := s3.NewFromConfig(cfg, func(u *s3.Options) {
+		u.UsePathStyle = true
+	})
 
 	l := &Lambda{
 		bucket:          os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"),
 		definitionDir:   "/tmp/clamav",
 		definitionFiles: []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"},
-		downloader:      s3manager.NewDownloader(sess),
-		uploader:        s3manager.NewUploader(sess),
+		downloader:      manager.NewDownloader(s3Client),
+		uploader:        manager.NewUploader(s3Client),
 		freshclam:       &Freshclam{},
 	}
 
-	lambda.Start(l.HandleEvent)
+	lambda.StartWithOptions(l.HandleEvent, lambda.WithContext(ctx))
 }

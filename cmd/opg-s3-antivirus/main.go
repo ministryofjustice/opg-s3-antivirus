@@ -1,7 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"log"
 	"net/url"
@@ -9,11 +15,6 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type EventRecord struct {
@@ -41,7 +42,12 @@ type LambdaTagValues struct {
 }
 
 type Downloader interface {
-	Download(w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error)
+	Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error)
+}
+
+type Tagger interface {
+	GetObjectTagging(ctx context.Context, params *s3.GetObjectTaggingInput, optFns ...func(*s3.Options)) (*s3.GetObjectTaggingOutput, error)
+	PutObjectTagging(ctx context.Context, params *s3.PutObjectTaggingInput, optFns ...func(*s3.Options)) (*s3.PutObjectTaggingOutput, error)
 }
 
 type Scanner interface {
@@ -53,11 +59,11 @@ type Lambda struct {
 	tagKey     string
 	tagValues  LambdaTagValues
 	scanner    Scanner
-	s3         s3iface.S3API
+	s3         Tagger
 	downloader Downloader
 }
 
-func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
+func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, files []string) error {
 	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) {
 		return err
 	}
@@ -68,8 +74,8 @@ func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
 			Key:    aws.String(key),
 		}
 
-		var buf aws.WriteAtBuffer
-		if _, err := l.downloader.Download(&buf, input); err != nil {
+		w := manager.NewWriteAtBuffer([]byte{})
+		if _, err := l.downloader.Download(ctx, w, input); err != nil {
 			return err
 		}
 
@@ -79,7 +85,7 @@ func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
 		}
 		defer file.Close() //nolint:errcheck // no need to check error when closing file
 
-		if _, err := file.Write(buf.Bytes()); err != nil {
+		if _, err := file.Write(w.Bytes()); err != nil {
 			return err
 		}
 	}
@@ -87,8 +93,8 @@ func (l *Lambda) downloadDefinitions(dir, bucket string, files []string) error {
 	return nil
 }
 
-func (l *Lambda) downloadFile(f io.WriterAt, bucket string, key string) error {
-	_, err := l.downloader.Download(f, &s3.GetObjectInput{
+func (l *Lambda) downloadFile(ctx context.Context, f io.WriterAt, bucket string, key string) error {
+	_, err := l.downloader.Download(ctx, f, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -100,8 +106,8 @@ func (l *Lambda) downloadFile(f io.WriterAt, bucket string, key string) error {
 	return nil
 }
 
-func (l *Lambda) tagFile(bucket string, key string, status string) error {
-	tagging, err := l.s3.GetObjectTagging(&s3.GetObjectTaggingInput{
+func (l *Lambda) tagFile(ctx context.Context, bucket string, key string, status string) error {
+	tagging, err := l.s3.GetObjectTagging(ctx, &s3.GetObjectTaggingInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -119,16 +125,16 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 	}
 
 	if !is_tag_set {
-		tagging.TagSet = append(tagging.TagSet, &s3.Tag{
+		tagging.TagSet = append(tagging.TagSet, types.Tag{
 			Key:   aws.String(l.tagKey),
 			Value: aws.String(status),
 		})
 	}
 
-	_, err = l.s3.PutObjectTagging(&s3.PutObjectTaggingInput{
+	_, err = l.s3.PutObjectTagging(ctx, &s3.PutObjectTaggingInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-		Tagging: &s3.Tagging{
+		Tagging: &types.Tagging{
 			TagSet: tagging.TagSet,
 		},
 	})
@@ -140,7 +146,7 @@ func (l *Lambda) tagFile(bucket string, key string, status string) error {
 	return nil
 }
 
-func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
+func (l *Lambda) HandleEvent(ctx context.Context, event ObjectCreatedEvent) (MyResponse, error) {
 	bucketName := event.Records[0].S3.Bucket.Name
 	objectKey, err := url.QueryUnescape(event.Records[0].S3.Object.Key)
 
@@ -169,7 +175,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 		}
 	}()
 
-	if err := l.downloadFile(f, bucketName, objectKey); err != nil {
+	if err := l.downloadFile(ctx, f, bucketName, objectKey); err != nil {
 		log.Print(err)
 		return MyResponse{}, err
 	}
@@ -188,7 +194,7 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 	}
 
 	log.Printf("scan complete, status %s, tagging file", statusString)
-	if err := l.tagFile(bucketName, objectKey, statusString); err != nil {
+	if err := l.tagFile(ctx, bucketName, objectKey, statusString); err != nil {
 		log.Print(err)
 		return MyResponse{}, err
 	}
@@ -198,11 +204,24 @@ func (l *Lambda) HandleEvent(event ObjectCreatedEvent) (MyResponse, error) {
 }
 
 func main() {
-	sess := session.Must(session.NewSession())
+	ctx := context.Background()
 
-	endpoint := os.Getenv("AWS_S3_ENDPOINT")
-	sess.Config.Endpoint = &endpoint
-	sess.Config.S3ForcePathStyle = aws.Bool(true)
+	awsRegion := os.Getenv("AWS_REGION")
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(awsRegion),
+	)
+	if err != nil {
+		log.Printf("error building aws config: %v", err)
+	}
+
+	if endpoint, ok := os.LookupEnv("AWS_S3_ENDPOINT"); ok {
+		cfg.BaseEndpoint = &endpoint
+	}
+
+	s3Client := s3.NewFromConfig(cfg, func(u *s3.Options) {
+		u.UsePathStyle = true
+	})
 
 	l := &Lambda{
 		tagKey: os.Getenv("ANTIVIRUS_TAG_KEY"),
@@ -211,12 +230,12 @@ func main() {
 			fail: os.Getenv("ANTIVIRUS_TAG_VALUE_FAIL"),
 		},
 		scanner:    &ClamAvScanner{},
-		s3:         s3.New(sess),
-		downloader: s3manager.NewDownloader(sess),
+		s3:         s3Client,
+		downloader: manager.NewDownloader(s3Client),
 	}
 
 	log.Print("downloading virus definitions")
-	err := l.downloadDefinitions("/tmp/clamav", os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"), []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"})
+	err = l.downloadDefinitions(ctx, "/tmp/clamav", os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"), []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"})
 	if err != nil {
 		log.Printf("downloading new definitions failed: %v", err)
 	}
@@ -226,5 +245,5 @@ func main() {
 		log.Printf("error starting damon: %v", err)
 	}
 
-	lambda.Start(l.HandleEvent)
+	lambda.StartWithOptions(l.HandleEvent, lambda.WithContext(ctx))
 }
