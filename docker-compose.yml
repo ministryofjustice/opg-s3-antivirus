@@ -32,7 +32,7 @@ services:
     entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
 
   localstack:
-    image: localstack/localstack:4.10
+    image: localstack/localstack:4.11
     depends_on: [ s3-antivirus, s3-antivirus-update ]
     volumes:
       - "./scripts/localstack/init:/etc/localstack/init/ready.d"
