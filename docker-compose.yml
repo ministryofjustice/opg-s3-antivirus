@@ -49,7 +49,7 @@ services:
       start_period: 30s
 
   go-lint:
-    image: golangci/golangci-lint:v2.7.2
+    image: golangci/golangci-lint:v2.8.0
     working_dir: /go/src/app
     volumes:
       - ./:/go/src/app
