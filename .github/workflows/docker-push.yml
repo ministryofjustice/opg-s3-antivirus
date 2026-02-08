@@ -26,7 +26,7 @@ jobs:
       - uses: unfor19/install-aws-cli-action@f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c # 1.0.8
 
       - name: Cache Images
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: /tmp/images
           key: ${{ runner.os }}-images-${{ github.run_id }}-${{ github.run_number }}
@@ -59,7 +59,7 @@ jobs:
         run: make scan
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@19b2f06db2b6f5108140aeb04014ef02b648f789 # v4.31.11
+        uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
         if: always()
         with:
           sarif_file: 'test-results/trivy.sarif'
