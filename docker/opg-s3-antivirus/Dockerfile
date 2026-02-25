@@ -11,18 +11,19 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus
 
-FROM public.ecr.aws/lambda/provided:al2
+FROM public.ecr.aws/lambda/provided:al2023
 
 ENV PATH="${PATH}:/usr/sbin"
 
-RUN yum update -y && yum install -y clamav-0.103.12-1.amzn2.0.1 clamd-0.103.12-1.amzn2.0.1 && yum clean all
+RUN dnf update -y && \
+    dnf install -y clamav-0.103.12-1.amzn2023.0.1 clamd-0.103.12-1.amzn2023.0.1
 
-RUN yum update -y && \
-    yum upgrade -y \
-    libcurl-8.3.0-1.amzn2.0.6 \
-    libxml2-2.9.1-6.amzn2.5.13 \
-    openssl-1:1.0.2k-24.amzn2.0.12 && \
-    yum clean all
+RUN dnf update -y && \
+    dnf upgrade -y \
+    libcurl-minimal-8.17.0-1.amzn2023.0.1 \
+    libxml2-2.10.3-2.amzn2023.0.1 \
+    openssl-1:3.2.2-1.amzn2023.0.5 && \
+    dnf clean all
 
 
 COPY ./clamd.conf /opt/etc/clamd.conf
