@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -64,12 +65,12 @@ func (l *Lambda) downloadDefinitions(ctx context.Context) error {
 		}
 
 		if _, err := io.Copy(file, output.Body); err != nil {
-			file.Close() //nolint:errcheck // best effort close
+			_ = file.Close()
 			return err
 		}
 
-		output.Body.Close() //nolint:errcheck // best effort close
-		file.Close()        //nolint:errcheck // best effort close
+		_ = output.Body.Close()
+		_ = file.Close()
 	}
 
 	return nil
@@ -90,11 +91,11 @@ func (l *Lambda) uploadDefinitions(ctx context.Context) error {
 		}
 
 		if _, err := l.storageClient.PutObject(ctx, input); err != nil {
-			file.Close() //nolint:errcheck // best effort close
+			_ = file.Close()
 			return err
 		}
 
-		file.Close() //nolint:errcheck // best effort close
+		_ = file.Close()
 	}
 
 	return nil

@@ -64,7 +64,7 @@ type Lambda struct {
 }
 
 func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, files []string) error {
-	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) { //nolint:gosec // bucket directory set by infra
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 			return err
 		}
 
-		output.Body.Close() //nolint:errcheck // best effort close
+		_ = output.Body.Close()
 	}
 
 	return nil
@@ -109,7 +109,7 @@ func (l *Lambda) downloadFile(ctx context.Context, f *os.File, bucket string, ke
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
-	output.Body.Close() //nolint:errcheck // best effort close
+	_ = output.Body.Close()
 	return nil
 }
 
@@ -169,16 +169,16 @@ func (l *Lambda) HandleEvent(ctx context.Context, event ObjectCreatedEvent) (MyR
 	}
 
 	defer func() {
-		err := os.Remove(f.Name())
+		err := os.Remove(f.Name()) //nolint:gosec // file created above
 		if err != nil {
-			log.Printf("error whilst removing file: %s", err.Error())
+			log.Printf("error whilst removing file: %s", err.Error()) //nolint:gosec // no injection risk from error
 		}
 	}()
 
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			log.Printf("error whilst closing file: %s", err.Error())
+			log.Printf("error whilst closing file: %s", err.Error()) //nolint:gosec // no injection risk from error
 		}
 	}()
 
