@@ -1,39 +1,37 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type mockStorageClient struct {
+type mockDownloader struct {
+	Downloader
 	mock.Mock
 }
 
-func (m *mockStorageClient) GetObject(ctx context.Context, input *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
-	args := m.Called(*input.Bucket, *input.Key)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
+func (m *mockDownloader) Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error) {
+	args := m.Called(w, *input.Bucket, *input.Key)
+	return 0, args.Error(0)
 }
 
-func (m *mockStorageClient) PutObject(ctx context.Context, input *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
-	body, _ := io.ReadAll(input.Body)
-	args := m.Called(*input.Bucket, *input.Key, body, input.ServerSideEncryption)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*s3.PutObjectOutput), args.Error(1)
+type mockUploader struct {
+	Uploader
+	mock.Mock
+}
+
+func (m *mockUploader) Upload(ctx context.Context, input *s3.PutObjectInput, opts ...func(*manager.Uploader)) (*manager.UploadOutput, error) {
+	args := m.Called(*input.Bucket, *input.Key, input.Body, types.ServerSideEncryptionAes256)
+	return nil, args.Error(0)
 }
 
 type mockUpdater struct {
@@ -54,45 +52,61 @@ func TestHandleEvent(t *testing.T) {
 	}
 	defer os.RemoveAll(tempdir) //nolint:errcheck // no need to check OS error in this test
 
-	storageClient := &mockStorageClient{}
+	downloader := &mockDownloader{}
+	uploader := &mockUploader{}
 	freshclam := &mockUpdater{}
 
 	l := &Lambda{
 		bucket:          "a-bucket",
 		definitionDir:   tempdir,
 		definitionFiles: []string{"a", "b"},
-		storageClient:   storageClient,
+		downloader:      downloader,
+		uploader:        uploader,
 		freshclam:       freshclam,
 	}
 
-	storageClient.
-		On("GetObject", "a-bucket", "a").
-		Return(&s3.GetObjectOutput{
-			Body: io.NopCloser(bytes.NewReader([]byte("hello"))),
-		}, nil)
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "a").
+		Run(func(args mock.Arguments) {
+			w := args[0].(io.WriterAt)
+			_, _ = w.WriteAt([]byte("hello"), 0)
+		}).
+		Return(nil)
 
-	storageClient.
-		On("GetObject", "a-bucket", "b").
-		Return(&s3.GetObjectOutput{
-			Body: io.NopCloser(bytes.NewReader([]byte("there"))),
-		}, nil)
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "b").
+		Run(func(args mock.Arguments) {
+			w := args[0].(io.WriterAt)
+			_, _ = w.WriteAt([]byte("there"), 0)
+		}).
+		Return(nil)
 
 	freshclam.
 		On("Update").Return(nil)
 
-	storageClient.
-		On("PutObject", "a-bucket", "a", []byte("hello"), types.ServerSideEncryptionAes256).
-		Return(&s3.PutObjectOutput{}, nil)
+	uploader.
+		On("Upload", "a-bucket", "a", mock.Anything, types.ServerSideEncryptionAes256).
+		Run(func(args mock.Arguments) {
+			r := args[2].(io.Reader)
+			data, _ := io.ReadAll(r)
+			assert.Equal([]byte("hello"), data)
+		}).
+		Return(nil)
 
-	storageClient.
-		On("PutObject", "a-bucket", "b", []byte("there"), types.ServerSideEncryptionAes256).
-		Return(&s3.PutObjectOutput{}, nil)
+	uploader.
+		On("Upload", "a-bucket", "b", mock.Anything, types.ServerSideEncryptionAes256).
+		Run(func(args mock.Arguments) {
+			r := args[2].(io.Reader)
+			data, _ := io.ReadAll(r)
+			assert.Equal([]byte("there"), data)
+		}).
+		Return(nil)
 
 	response, err := l.HandleEvent(context.Background(), Event{})
 	assert.Nil(err)
 	assert.Equal(Response{Message: "clamav definitions updated"}, response)
 
-	mock.AssertExpectationsForObjects(t, storageClient, freshclam)
+	mock.AssertExpectationsForObjects(t, downloader, uploader, freshclam)
 }
 
 func TestHandleEventFirstRun(t *testing.T) {
@@ -113,35 +127,37 @@ func TestHandleEventFirstRun(t *testing.T) {
 		assert.Nil(err)
 	}
 
-	storageClient := &mockStorageClient{}
+	downloader := &mockDownloader{}
+	uploader := &mockUploader{}
 	freshclam := &mockUpdater{}
 
 	l := &Lambda{
 		bucket:          "a-bucket",
 		definitionDir:   tempdir,
 		definitionFiles: []string{"a", "b"},
-		storageClient:   storageClient,
+		downloader:      downloader,
+		uploader:        uploader,
 		freshclam:       freshclam,
 	}
 
-	storageClient.
-		On("GetObject", "a-bucket", "a").
-		Return(nil, &types.NoSuchKey{})
+	downloader.
+		On("Download", mock.Anything, "a-bucket", "a").
+		Return(&types.NoSuchKey{})
 
 	freshclam.
 		On("Update").Return(nil)
 
-	storageClient.
-		On("PutObject", "a-bucket", "a", mock.Anything, types.ServerSideEncryptionAes256).
-		Return(&s3.PutObjectOutput{}, nil)
+	uploader.
+		On("Upload", "a-bucket", "a", mock.Anything, types.ServerSideEncryptionAes256).
+		Return(nil)
 
-	storageClient.
-		On("PutObject", "a-bucket", "b", mock.Anything, types.ServerSideEncryptionAes256).
-		Return(&s3.PutObjectOutput{}, nil)
+	uploader.
+		On("Upload", "a-bucket", "b", mock.Anything, types.ServerSideEncryptionAes256).
+		Return(nil)
 
 	response, err := l.HandleEvent(context.Background(), Event{})
 	assert.Nil(err)
 	assert.Equal(Response{Message: "clamav definitions updated"}, response)
 
-	mock.AssertExpectationsForObjects(t, storageClient, freshclam)
+	mock.AssertExpectationsForObjects(t, downloader, uploader, freshclam)
 }

@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -41,10 +41,13 @@ type LambdaTagValues struct {
 	fail string
 }
 
+type Downloader interface {
+	Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error)
+}
+
 type Tagger interface {
 	GetObjectTagging(ctx context.Context, params *s3.GetObjectTaggingInput, optFns ...func(*s3.Options)) (*s3.GetObjectTaggingOutput, error)
 	PutObjectTagging(ctx context.Context, params *s3.PutObjectTaggingInput, optFns ...func(*s3.Options)) (*s3.PutObjectTaggingOutput, error)
-	GetObject(ctx context.Context, input *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 }
 
 type Scanner interface {
@@ -53,10 +56,11 @@ type Scanner interface {
 }
 
 type Lambda struct {
-	tagKey    string
-	tagValues LambdaTagValues
-	scanner   Scanner
-	s3        Tagger
+	tagKey     string
+	tagValues  LambdaTagValues
+	scanner    Scanner
+	s3         Tagger
+	downloader Downloader
 }
 
 func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, files []string) error {
@@ -70,8 +74,8 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 			Key:    aws.String(key),
 		}
 
-		output, err := l.s3.GetObject(ctx, input)
-		if err != nil {
+		w := manager.NewWriteAtBuffer([]byte{})
+		if _, err := l.downloader.Download(ctx, w, input); err != nil {
 			return err
 		}
 
@@ -81,18 +85,16 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 		}
 		defer file.Close() //nolint:errcheck // no need to check error when closing file
 
-		if _, err := io.Copy(file, output.Body); err != nil {
+		if _, err := file.Write(w.Bytes()); err != nil {
 			return err
 		}
-
-		output.Body.Close() //nolint:errcheck // best effort close
 	}
 
 	return nil
 }
 
-func (l *Lambda) downloadFile(ctx context.Context, f *os.File, bucket string, key string) error {
-	output, err := l.s3.GetObject(ctx, &s3.GetObjectInput{
+func (l *Lambda) downloadFile(ctx context.Context, f io.WriterAt, bucket string, key string) error {
+	_, err := l.downloader.Download(ctx, f, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -101,11 +103,6 @@ func (l *Lambda) downloadFile(ctx context.Context, f *os.File, bucket string, ke
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
-	if _, err := io.Copy(f, output.Body); err != nil {
-		return fmt.Errorf("failed to download file: %w", err)
-	}
-
-	output.Body.Close() //nolint:errcheck // best effort close
 	return nil
 }
 
@@ -119,15 +116,15 @@ func (l *Lambda) tagFile(ctx context.Context, bucket string, key string, status 
 		return fmt.Errorf("failed to get tags: %w", err)
 	}
 
-	isTagSet := false
+	is_tag_set := false
 	for index, tag := range tagging.TagSet {
 		if *tag.Key == l.tagKey {
 			tagging.TagSet[index].Value = aws.String(status)
-			isTagSet = true
+			is_tag_set = true
 		}
 	}
 
-	if !isTagSet {
+	if !is_tag_set {
 		tagging.TagSet = append(tagging.TagSet, types.Tag{
 			Key:   aws.String(l.tagKey),
 			Value: aws.String(status),
@@ -232,8 +229,9 @@ func main() {
 			pass: os.Getenv("ANTIVIRUS_TAG_VALUE_PASS"),
 			fail: os.Getenv("ANTIVIRUS_TAG_VALUE_FAIL"),
 		},
-		scanner: &ClamAvScanner{},
-		s3:      s3Client,
+		scanner:    &ClamAvScanner{},
+		s3:         s3Client,
+		downloader: manager.NewDownloader(s3Client),
 	}
 
 	log.Print("downloading virus definitions")
