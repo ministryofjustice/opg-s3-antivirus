@@ -31,7 +31,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Get Lambda artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: myFunction
           path: release
@@ -47,7 +47,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda artifact sha256
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: myFunction_sha256sum
           path: release
@@ -63,7 +63,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda Layer artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: lambda_layer
           path: release
@@ -79,7 +79,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Get Lambda Layer artifact sha256
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: lambda_layer_sha256sum
           path: release
