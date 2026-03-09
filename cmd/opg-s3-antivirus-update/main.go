@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -26,20 +26,16 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-type Downloader interface {
-	Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error)
-}
-
-type Uploader interface {
-	Upload(ctx context.Context, input *s3.PutObjectInput, opts ...func(*manager.Uploader)) (*manager.UploadOutput, error)
+type StorageClient interface {
+	GetObject(ctx context.Context, input *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+	PutObject(ctx context.Context, input *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
 type Lambda struct {
 	bucket          string
 	definitionDir   string
 	definitionFiles []string
-	downloader      Downloader
-	uploader        Uploader
+	storageClient   StorageClient
 	freshclam       Updater
 }
 
@@ -54,8 +50,8 @@ func (l *Lambda) downloadDefinitions(ctx context.Context) error {
 			Key:    aws.String(key),
 		}
 
-		w := manager.NewWriteAtBuffer([]byte{})
-		if _, err := l.downloader.Download(ctx, w, input); err != nil {
+		output, err := l.storageClient.GetObject(ctx, input)
+		if err != nil {
 			var nske *types.NoSuchKey
 			if errors.As(err, &nske) {
 				return nil
@@ -68,16 +64,13 @@ func (l *Lambda) downloadDefinitions(ctx context.Context) error {
 			return err
 		}
 
-		defer func() {
-			err := file.Close()
-			if err != nil {
-				log.Printf("error whilst closing file: %s", err.Error())
-			}
-		}()
-
-		if _, err := file.Write(w.Bytes()); err != nil {
+		if _, err := io.Copy(file, output.Body); err != nil {
+			_ = file.Close()
 			return err
 		}
+
+		_ = output.Body.Close()
+		_ = file.Close()
 	}
 
 	return nil
@@ -97,9 +90,12 @@ func (l *Lambda) uploadDefinitions(ctx context.Context) error {
 			ServerSideEncryption: types.ServerSideEncryptionAes256,
 		}
 
-		if _, err := l.uploader.Upload(ctx, input); err != nil {
+		if _, err := l.storageClient.PutObject(ctx, input); err != nil {
+			_ = file.Close()
 			return err
 		}
+
+		_ = file.Close()
 	}
 
 	return nil
@@ -152,8 +148,7 @@ func main() {
 		bucket:          os.Getenv("ANTIVIRUS_DEFINITIONS_BUCKET"),
 		definitionDir:   "/tmp/clamav",
 		definitionFiles: []string{"bytecode.cvd", "daily.cvd", "freshclam.dat", "main.cvd"},
-		downloader:      manager.NewDownloader(s3Client),
-		uploader:        manager.NewUploader(s3Client),
+		storageClient:   s3Client,
 		freshclam:       &Freshclam{},
 	}
 

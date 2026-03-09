@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -42,7 +42,7 @@ type LambdaTagValues struct {
 }
 
 type Downloader interface {
-	Download(ctx context.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*manager.Downloader)) (n int64, err error)
+	GetObject(ctx context.Context, input *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 }
 
 type Tagger interface {
@@ -64,7 +64,7 @@ type Lambda struct {
 }
 
 func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, files []string) error {
-	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(dir, 0750); err != nil && !os.IsExist(err) { //nolint:gosec // bucket directory set by infra
 		return err
 	}
 
@@ -74,8 +74,8 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 			Key:    aws.String(key),
 		}
 
-		w := manager.NewWriteAtBuffer([]byte{})
-		if _, err := l.downloader.Download(ctx, w, input); err != nil {
+		output, err := l.downloader.GetObject(ctx, input)
+		if err != nil {
 			return err
 		}
 
@@ -85,16 +85,18 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 		}
 		defer file.Close() //nolint:errcheck // no need to check error when closing file
 
-		if _, err := file.Write(w.Bytes()); err != nil {
+		if _, err := io.Copy(file, output.Body); err != nil {
 			return err
 		}
+
+		_ = output.Body.Close()
 	}
 
 	return nil
 }
 
-func (l *Lambda) downloadFile(ctx context.Context, f io.WriterAt, bucket string, key string) error {
-	_, err := l.downloader.Download(ctx, f, &s3.GetObjectInput{
+func (l *Lambda) downloadFile(ctx context.Context, f *os.File, bucket string, key string) error {
+	output, err := l.downloader.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -103,6 +105,11 @@ func (l *Lambda) downloadFile(ctx context.Context, f io.WriterAt, bucket string,
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
+	if _, err := io.Copy(f, output.Body); err != nil {
+		return fmt.Errorf("failed to download file: %w", err)
+	}
+
+	_ = output.Body.Close()
 	return nil
 }
 
@@ -162,16 +169,16 @@ func (l *Lambda) HandleEvent(ctx context.Context, event ObjectCreatedEvent) (MyR
 	}
 
 	defer func() {
-		err := os.Remove(f.Name())
+		err := os.Remove(f.Name()) //nolint:gosec // file created above
 		if err != nil {
-			log.Printf("error whilst removing file: %s", err.Error())
+			log.Printf("error whilst removing file: %s", err.Error()) //nolint:gosec // no injection risk from error
 		}
 	}()
 
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			log.Printf("error whilst closing file: %s", err.Error())
+			log.Printf("error whilst closing file: %s", err.Error()) //nolint:gosec // no injection risk from error
 		}
 	}()
 
@@ -231,7 +238,7 @@ func main() {
 		},
 		scanner:    &ClamAvScanner{},
 		s3:         s3Client,
-		downloader: manager.NewDownloader(s3Client),
+		downloader: s3Client,
 	}
 
 	log.Print("downloading virus definitions")
