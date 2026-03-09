@@ -23,7 +23,8 @@ RUN apk update && \
     libssl3 \
     libxml2 \
     openssl \
-    pcre2 && \
+    pcre2 \
+    zlib && \
     rm -rf /var/cache/apk/*
 
 RUN mkdir -p /tmp/clamav && chown -R clamav:clamav /tmp/clamav
