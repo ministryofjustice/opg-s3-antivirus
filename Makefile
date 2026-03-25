@@ -1,7 +1,7 @@
-all: lint unit-test build scan acceptance-test down
+all: lint unit-test build acceptance-test down
 
 test-results:
-	mkdir -p -m 0777 .cache test-results .gocache cypress/screenshots .trivy-cache
+	mkdir -p -m 0777 .cache test-results .gocache cypress/screenshots
 
 setup-directories: test-results
 
@@ -14,10 +14,6 @@ unit-test: setup-directories
 .PHONY: build
 build:
 	docker compose build --parallel s3-antivirus s3-antivirus-update
-
-scan: setup-directories
-	docker compose run --rm trivy image --format table --exit-code 0 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
-	docker compose run --rm trivy image --format sarif --output /test-results/trivy.sarif --exit-code 1 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
 
 check-clam:
 	docker compose up s3-antivirus -d

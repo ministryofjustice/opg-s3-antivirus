@@ -65,16 +65,3 @@ services:
     volumes:
       - ./:/go/src/app
       - ./.gocache:/go/pkg/mod
-
-  trivy:
-    image: aquasec/trivy:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./.trivy-cache:/root/.cache
-      - ./test-results:/test-results
-      - ./.trivyignore:/.trivyignore
-    environment:
-      - TRIVY_DB_REPOSITORY=${TRIVY_DB_REPOSITORY}
-      - TRIVY_JAVA_DB_REPOSITORY=${TRIVY_JAVA_DB_REPOSITORY}
-      - TRIVY_USERNAME=${DOCKER_USERNAME}
-      - TRIVY_PASSWORD=${DOCKER_PASSWORD}

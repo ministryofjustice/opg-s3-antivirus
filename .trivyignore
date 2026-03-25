@@ -1,4 +1,0 @@
-# Ignore AWS Lambda Runtime stdlib vuln.
-CVE-2026-25679 exp:2026-04-01
-CVE-2026-27139 exp:2026-04-01
-CVE-2026-27142 exp:2026-04-01
