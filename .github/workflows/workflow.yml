@@ -66,6 +66,8 @@ jobs:
     with:
       tag: ${{ needs.create-tag.outputs.tag }}
       timestamp: ${{ needs.create-tag.outputs.timestamp }}
+    secrets:
+      snyk_opg_org_token: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
 
   zip-lambda-build:
     name: Package Lambda Function and Layer Zips

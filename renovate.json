@@ -11,6 +11,7 @@
     "Dependencies",
     "Renovate"
   ],
+  "minimumReleaseAge": "7 days",
   "packageRules": [
     {
       "automerge": true,
@@ -18,7 +19,6 @@
       "groupSlug": "all-minor-patch-updates",
       "matchUpdateTypes": ["minor", "patch"],
       "prPriority": 1,
-      "minimumReleaseAge": "3 days",
       "matchPackageNames": ["*"]
     },
     {
@@ -27,7 +27,6 @@
       "groupSlug": "github-minor-patch-updates",
       "matchUpdateTypes": ["minor", "patch"],
       "prPriority": 2,
-      "minimumReleaseAge": "3 days",
       "matchPackageNames": ["*"],
       "matchFileNames": [".github/**"]
     }
@@ -36,8 +35,7 @@
     "labels": [
       "Dependencies",
       "Renovate"
-    ],
-    "minimumReleaseAge": "3 days"
+    ]
   },
   "vulnerabilityAlerts": {
     "groupName": "Vulnerability Patches",
