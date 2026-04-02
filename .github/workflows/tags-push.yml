@@ -26,10 +26,6 @@ jobs:
           role-duration-seconds: 900
           aws-region: eu-west-1
 
-      - name: Install AWS CLI
-        id: install-aws-cli
-        uses: unfor19/install-aws-cli-action@f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c # 1.0.8
-
       - name: Push Tag to Parameter Store
         run: |
           aws ssm put-parameter --name "opg-s3-antivirus-latest-green-build" --type "String" --value "${{ inputs.tag }}" --overwrite --region=eu-west-1
