@@ -1,3 +1,13 @@
 version: v1.25.1
-ignore: {}
+ignore: 
+  SNYK-AMZN2023-OPENSSLSNAPSAFELIBS-15921202:
+    - '*':
+        reason: OpenSSL LOW Vuln 
+        expires: 2026-05-08T16:48:15.051Z
+        created: 2026-04-08T16:48:15.054Z
+  SNYK-AMZN2023-OPENSSLFIPSPROVIDERLATEST-15922036:
+    - '*':
+        reason: OpenSSL LOW Vuln 
+        expires: 2026-05-08T16:48:15.051Z
+        created: 2026-04-08T16:48:15.054Z
 patch: {}
