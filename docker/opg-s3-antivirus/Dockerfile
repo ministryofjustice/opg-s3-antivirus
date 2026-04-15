@@ -20,7 +20,8 @@ RUN dnf update -y && \
 
 RUN dnf upgrade -y \
     libcurl-minimal-8.17.0-1.amzn2023.0.1 \
-    openssl-1:3.2.2-1.amzn2023.0.5 && \
+    libnghttp2-1.57.0-1.amzn2023.0.1 \
+    openssl-1:3.5.5-1.amzn2023.0.4 && \
     dnf update -y libxml2 --releasever 2023.10.20260302 && \
     dnf clean all
 
