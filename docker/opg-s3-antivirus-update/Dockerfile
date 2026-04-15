@@ -22,6 +22,8 @@ RUN apk update && \
     libcurl \
     libssl3 \
     libxml2 \
+    musl \
+    musl-utils \
     openssl \
     pcre2 \
     zlib && \
