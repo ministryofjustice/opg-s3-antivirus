@@ -23,6 +23,7 @@ RUN dnf upgrade -y \
     openssl-1:3.2.2-1.amzn2023.0.5 && \
     dnf update -y libxml2 --releasever 2023.10.20260302 && \
     dnf update -y openssl-3.5.5-1.amzn2023.0.4 openssl-libs-1:3.5.5-1.amzn2023.0.4 openssl-fips-provider-latest-1:3.5.5-1.amzn2023.0.4 libnghttp2-1.59.0-3.amzn2023.0.2 --releasever 2023.11.20260413 && \
+    dnf update -y glibc \
     dnf clean all
 
 
