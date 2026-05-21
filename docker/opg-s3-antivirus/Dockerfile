@@ -18,12 +18,7 @@ ENV PATH="${PATH}:/usr/sbin"
 RUN dnf update -y && \
     dnf install -y clamav-0.103.12-1.amzn2023.0.1 clamd-0.103.12-1.amzn2023.0.1
 
-RUN dnf upgrade -y \
-    libcurl-minimal-8.17.0-1.amzn2023.0.1 \
-    openssl-1:3.2.2-1.amzn2023.0.5 && \
-    dnf update -y libxml2 --releasever 2023.10.20260302 && \
-    dnf update -y openssl-3.5.5-1.amzn2023.0.4 openssl-libs-1:3.5.5-1.amzn2023.0.4 openssl-fips-provider-latest-1:3.5.5-1.amzn2023.0.4 libnghttp2-1.59.0-3.amzn2023.0.2 --releasever 2023.11.20260413 && \
-    dnf update -y glibc-2.34-231.amzn2023.0.4 --releasever 2023.11.20260427 && \
+RUN dnf upgrade -y --releasever=latest && \
     dnf clean all
 
 
