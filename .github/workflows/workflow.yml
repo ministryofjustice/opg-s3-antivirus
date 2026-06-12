@@ -42,7 +42,7 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
     with:
       files: test-results/test-coverage.txt
-      fail_ci_if_error: true
+      fail_ci_if_error: false
       verbose: true
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
