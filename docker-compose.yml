@@ -4,6 +4,8 @@ services:
     image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus:latest
     build:
       dockerfile: docker/opg-s3-antivirus/Dockerfile
+    privileged: false
+    user: clamscan
     environment:
       AWS_REGION: eu-west-1
       AWS_S3_ENDPOINT: http://localstack:4566
@@ -21,6 +23,8 @@ services:
     image: 311462405659.dkr.ecr.eu-west-1.amazonaws.com/s3-antivirus-update:latest
     build:
       dockerfile: docker/opg-s3-antivirus-update/Dockerfile
+    privileged: false
+    user: clamav
     environment:
       AWS_REGION: eu-west-1
       AWS_S3_ENDPOINT: http://localstack:4566

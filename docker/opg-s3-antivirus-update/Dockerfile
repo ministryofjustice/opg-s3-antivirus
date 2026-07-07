@@ -34,4 +34,6 @@ RUN mkdir -p /tmp/clamav && chown -R clamav:clamav /tmp/clamav
 COPY ./freshclam.conf /etc
 COPY --from=build-env /go/bin/main /var/task/main
 
+
+USER clamav
 ENTRYPOINT [ "/var/task/main" ]
