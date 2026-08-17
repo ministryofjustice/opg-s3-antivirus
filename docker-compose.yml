@@ -36,7 +36,7 @@ services:
     entrypoint: /aws-lambda/aws-lambda-rie /var/task/main
 
   localstack:
-    image: localstack/localstack:4.14
+    image: localstack/localstack:4.14@sha256:3ebc37595918b8accb852f8048fef2aff047d465167edd655528065b07bc364a
     depends_on: [ s3-antivirus, s3-antivirus-update ]
     volumes:
       - "./scripts/localstack/init:/etc/localstack/init/ready.d"
@@ -53,7 +53,7 @@ services:
       start_period: 30s
 
   go-lint:
-    image: golangci/golangci-lint:v2.12.2
+    image: golangci/golangci-lint:v2.12.2@sha256:5cceeef04e53efe1470638d4b4b4f5ceefd574955ab3941b2d9a68a8c9ad5240
     working_dir: /go/src/app
     volumes:
       - ./:/go/src/app
