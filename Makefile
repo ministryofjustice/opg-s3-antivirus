@@ -53,7 +53,7 @@ lambda-zip-build: lambda-zip-prep
 	docker run --rm \
 		--platform linux/amd64 \
 		-v `pwd`/build:/app:Z \
-		golang:1.24-alpine \
+		golang:1.26.6-alpine \
 		/bin/sh -c "cd /app && ./build-lambda-zip.sh"
 .PHONY: lambda-zip-build
 
