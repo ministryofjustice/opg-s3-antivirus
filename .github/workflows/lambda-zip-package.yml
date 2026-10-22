@@ -21,12 +21,12 @@ jobs:
           sha256sum myFunction.zip > myFunction.zip.sha256sum
           echo "Lambda Function Zip SHA256 Hash: $(cat myFunction.zip.sha256sum)"  >> $GITHUB_STEP_SUMMARY
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: myFunction
           path: build/myFunction.zip
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: myFunction_sha256sum
           path: build/myFunction.zip.sha256sum
@@ -50,12 +50,12 @@ jobs:
           sha256sum lambda_layer.zip > lambda_layer.zip.sha256sum
           echo "Lambda Layer Zip SHA256 Hash: $(cat lambda_layer.zip.sha256sum)"  >> $GITHUB_STEP_SUMMARY
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lambda_layer
           path: build/lambda_layer.zip
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lambda_layer_sha256sum
           path: build/lambda_layer.zip.sha256sum
