@@ -1,6 +1,6 @@
 module github.com/ministryofjustice/opg-s3-antivirus
 
-go 1.26.6
+go 1.26.10
 
 require (
 	github.com/aws/aws-lambda-go v1.54.0
