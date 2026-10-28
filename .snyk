@@ -1,3 +1,6 @@
 version: v1.25.1
-ignore: {}
-patch: {}
+ignore:
+  SNYK-GOLANG-STDCRYPTOX509-21400137:
+    - '*':
+        reason: Dependency of AWS RIE bundled on image
+        expires: 2026-10-30T14:41:58.199Z
