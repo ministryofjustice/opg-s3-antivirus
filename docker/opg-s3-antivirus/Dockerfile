@@ -21,6 +21,7 @@ RUN dnf update -y && \
 RUN dnf upgrade -y --releasever=latest && \
     dnf clean all
 
+RUN rm /usr/local/bin/aws-lambda-rie
 
 COPY ./clamd.conf /opt/etc/clamd.conf
 COPY --from=build-env /go/bin/main /var/task/main
