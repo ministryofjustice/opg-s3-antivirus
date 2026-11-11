@@ -11,7 +11,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/main ./cmd/opg-s3-antivirus
 
-FROM public.ecr.aws/lambda/provided:al2023@sha256:612c98f126c2a95e77a016d56fed50a83055e11d636132ee6ebdd461f01b9617
+FROM public.ecr.aws/lambda/provided:al2023@sha256:11c68dffb9aedf1a2198505278c1779f921edf1a821d2aa6434ad9e7da260caf
 
 ENV PATH="${PATH}:/usr/sbin"
 
