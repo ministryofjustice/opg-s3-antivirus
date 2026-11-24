@@ -60,6 +60,13 @@ services:
       - ./.cache/golangci-lint/v1.53.3:/root/.cache
     command: golangci-lint run -v --timeout 5m --enable gosec --output.text.path stdout --output.sarif.path test-results/golangci-lint.sarif
 
+  gosec:
+    image: golang:1.27.3-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: go tool gosec -exclude-dir=.gocache -fmt=sarif -out=/app/test-results/gosec.sarif -stdout -verbose=text /app/...
+
   test-runner:
     image: s3-antivirius-test-runner:latest
     build:

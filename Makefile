@@ -1,4 +1,4 @@
-all: lint unit-test build acceptance-test down
+all: lint gosec unit-test build acceptance-test down
 
 test-results:
 	mkdir -p -m 0777 .cache test-results .gocache cypress/screenshots
@@ -7,6 +7,9 @@ setup-directories: test-results
 
 lint: setup-directories
 	docker compose run --rm go-lint
+
+gosec: setup-directories
+	docker compose run --rm gosec
 
 unit-test: setup-directories
 	docker compose run --rm test-runner

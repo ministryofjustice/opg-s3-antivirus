@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -68,6 +67,12 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 		return err
 	}
 
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close() //nolint:errcheck // no need to check error when closing root
+
 	for _, key := range files {
 		input := &s3.GetObjectInput{
 			Bucket: aws.String(bucket),
@@ -79,7 +84,7 @@ func (l *Lambda) downloadDefinitions(ctx context.Context, dir, bucket string, fi
 			return err
 		}
 
-		file, err := os.Create(filepath.Join(dir, key)) //nolint:gosec // variables are fixed so inclusion is not risky
+		file, err := root.Create(key)
 		if err != nil {
 			return err
 		}
